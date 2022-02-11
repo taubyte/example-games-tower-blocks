@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "lib": ["es6", "dom"],
+    "outDir": "./dist/",
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "module": "ESNext",
+    "target": "ESNext"
+  },
+  "include": [
+    "./src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
