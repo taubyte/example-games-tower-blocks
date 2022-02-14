@@ -14,5 +14,10 @@ module.exports = {
   ignorePatterns: ['.eslintrc.js', '.eslintrc.js', 'webpack.*.js'],
   rules: {
     'react/jsx-filename-extension': [0],
+    '@typescript-eslint/lines-between-class-members': [
+      'error',
+      'always',
+      { exceptAfterSingleLine: true },
+    ],
   },
 };
