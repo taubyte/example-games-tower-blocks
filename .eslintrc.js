@@ -19,5 +19,7 @@ module.exports = {
       'always',
       { exceptAfterSingleLine: true },
     ],
+    "no-multi-spaces": ["error"],
+    "space-in-parens": ["error"]
   },
 };
