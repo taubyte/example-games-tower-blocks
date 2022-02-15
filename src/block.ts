@@ -1,6 +1,8 @@
-import { BoxGeometry, Matrix4, Mesh, MeshToonMaterial } from 'three';
+import { BoxGeometry, Matrix4, Mesh, MeshToonMaterial, Vector3 } from 'three';
 
 export class Block {
+  public direction: Vector3 = new Vector3(0, 0, 0);
+
   private mesh: Mesh;
   private material: MeshToonMaterial;
 
@@ -40,5 +42,13 @@ export class Block {
 
   public setColor(color: number) {
     this.material.color.set(color);
+  }
+
+  public moveScalar(scalar: number) {
+    this.position.set(
+      this.position.x + this.direction.x * scalar,
+      this.position.y + this.direction.y * scalar,
+      this.position.z + this.direction.z * scalar,
+    );
   }
 }

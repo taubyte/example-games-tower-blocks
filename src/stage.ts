@@ -1,3 +1,4 @@
+import { Easing, Tween } from '@tweenjs/tween.js';
 import {
   AmbientLight,
   DirectionalLight,
@@ -29,7 +30,7 @@ export class Stage {
 
   public resize(width: number, height: number) {
     const aspect = width / height;
-    const viewSize = 20;
+    const viewSize = 30;
     this.camera.left = -viewSize * aspect;
     this.camera.right = viewSize * aspect;
     this.camera.top = viewSize;
@@ -46,7 +47,7 @@ export class Stage {
     this.scene.remove(object);
   }
 
-  public setCcameraPosition(x: number, y: number, z: number) {
+  public setCameraPosition(x: number, y: number, z: number) {
     this.camera.position.set(x, y, z);
   }
 
@@ -63,7 +64,7 @@ export class Stage {
     this.camera = new OrthographicCamera();
     this.camera.near = -100;
     this.camera.far = 1000;
-    this.setCcameraPosition(2, 2, 2);
+    this.setCameraPosition(2, 2, 2);
     this.camera.lookAt(new Vector3(0, 0, 0));
   }
 
@@ -74,5 +75,17 @@ export class Stage {
 
     const ambientLight = new AmbientLight(0xffffff, 0.4);
     this.add(ambientLight);
+  }
+
+  public setCamera(y: number, duration: number = 300) {
+    new Tween(this.camera.position)
+      .to({ y }, duration)
+      .easing(Easing.Cubic.Out)
+      .start();
+
+    new Tween(this.camera.lookAt)
+      .to({ y: y - 2 }, duration)
+      .easing(Easing.Cubic.Out)
+      .start();
   }
 }
