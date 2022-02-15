@@ -3,6 +3,7 @@
     "lib": ["es6", "dom"],
     "outDir": "./dist/",
     "noImplicitAny": true,
+    "moduleResolution": "node",
     "sourceMap": true,
     "module": "ESNext",
     "target": "ESNext"
