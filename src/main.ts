@@ -6,7 +6,12 @@ function onResize() {
   game.resize(window.innerWidth, window.innerHeight);
 }
 
-function onMove(event: TouchEvent | MouseEvent) {
+function onTouch(event: TouchEvent) {
+  event.preventDefault();
+  game.action();
+}
+
+function onClick(event: MouseEvent) {
   event.preventDefault();
   game.action();
 }
@@ -17,8 +22,8 @@ function onLoad() {
 
   window.addEventListener('resize', onResize, false);
   window.addEventListener('orientationchange', onResize, false);
-  window.addEventListener('touchmove', onMove, false);
-  window.addEventListener('mousemove', onMove, false);
+  window.addEventListener('touchstart', onTouch, { passive:false });
+  window.addEventListener('mousedown', onClick, false);
 }
 
 window.addEventListener('load', onLoad, false);
