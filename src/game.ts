@@ -42,7 +42,7 @@ export class Game {
   public update() {
     this.requestId = requestAnimationFrame((time: number) => {
       tweenjsUpdate(time);
-      this.moveLastBlock();
+      this.moveCurrentBlock();
       this.render();
       this.update();
     });
@@ -77,12 +77,11 @@ export class Game {
   }
 
   private startGame() {
-    if (this.state !== 'playing') {
-      this.colorOffset = Math.round(Math.random() * 100);
-      this.scoreContainer.innerHTML = '0';
-      this.updateState('playing');
-      this.placeBlock();
-    }
+    if (this.state === 'playing') return;
+    this.colorOffset = Math.round(Math.random() * 100);
+    this.scoreContainer.innerHTML = '0';
+    this.updateState('playing');
+    this.addBlock(this.blocks[0]);
   }
 
   private restartGame() {
@@ -95,47 +94,62 @@ export class Game {
 
   private placeBlock() {
     const length = this.blocks.length;
-    const lastBlock = this.blocks[length - 1];
-    this.scoreContainer.innerHTML = String(length - 1);
-    
-    const { width, height, depth } = lastBlock.getDimesion();
-    this.addBlock(width, height, depth);
+    const targetBlock = this.blocks[length - 2];
+    const currentBlock = this.blocks[length - 1];
+
+    const result = currentBlock.cut(targetBlock);
+    if (result === false) {
+      this.stage.remove(currentBlock.getMesh());
+      this.endGame();
+    } else {
+      this.scoreContainer.innerHTML = String(length - 1);
+      this.addBlock(currentBlock);
+    }
   }
 
   private addBaseBlock() {
     const block = new Block(10, 2, 10);
     this.stage.add(block.getMesh());
     this.blocks.push(block);
+    block.setColor(0x333344);
   }
 
-  private addBlock(width: number, height: number, depth: number) {
+  private addBlock(targetBlock: Block) {
     const length = this.blocks.length;
 
-    const block = new Block(width, height, depth);
+    const block = new Block(targetBlock.width, targetBlock.height, targetBlock.depth);
     this.stage.add(block.getMesh());
     this.blocks.push(block);
 
     block.setColor(this.getNextBlockColor());
-    block.position.y = height * length;
+    block.position.set(
+      targetBlock.position.x,
+      targetBlock.height * length,
+      targetBlock.position.z,
+    );
 
     if (length % 2 === 0) {
       block.direction.x = Math.random() > 0.5 ? 1 : -1;
     } else {
       block.direction.z = Math.random() > 0.5 ? 1 : -1;
     }
+
     block.moveScalar(12);
-    this.stage.setCamera(height * length);
+    this.stage.setCamera(block.position.y);
 
     this.scoreContainer.innerHTML = String(length - 1);
     if (length >= 5) this.instructions.classList.add('hide');
   }
 
-  private moveLastBlock() {
+  private moveCurrentBlock() {
+    if (this.state !== 'playing') return;
+
     const length = this.blocks.length;
     if (length < 2) return;
-    const lastBlock = this.blocks[length - 1];
-    const speed = -0.1;
-    lastBlock.moveScalar(speed);
+
+    const currentBlock = this.blocks[length - 1];
+    const speed = -0.2;
+    currentBlock.moveScalar(speed);
   }
 
   private getNextBlockColor() {

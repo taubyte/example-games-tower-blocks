@@ -82,10 +82,5 @@ export class Stage {
       .to({ y }, duration)
       .easing(Easing.Cubic.Out)
       .start();
-
-    new Tween(this.camera.lookAt)
-      .to({ y: y - 2 }, duration)
-      .easing(Easing.Cubic.Out)
-      .start();
   }
 }
