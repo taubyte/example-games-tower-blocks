@@ -10,9 +10,9 @@ import {
 
 export class Stage {
   private container: HTMLElement;
-  private camera: OrthographicCamera;
   private scene: Scene;
   private renderer: WebGLRenderer;
+  private camera: OrthographicCamera;
 
   constructor() {
     this.container = document.getElementById('game');
@@ -35,9 +35,7 @@ export class Stage {
     this.camera.top = viewSize;
     this.camera.bottom = -viewSize;
     this.camera.updateProjectionMatrix();
-
     this.renderer.setSize(width, height);
-    this.render();
   }
 
   public add(object: Object3D) {
@@ -46,6 +44,10 @@ export class Stage {
 
   public remove(object: Object3D) {
     this.scene.remove(object);
+  }
+
+  public setCcameraPosition(x: number, y: number, z: number) {
+    this.camera.position.set(x, y, z);
   }
 
   private setupRenderer() {
@@ -61,9 +63,7 @@ export class Stage {
     this.camera = new OrthographicCamera();
     this.camera.near = -100;
     this.camera.far = 1000;
-    this.camera.position.x = 2;
-    this.camera.position.y = 2;
-    this.camera.position.z = 2;
+    this.setCcameraPosition(2, 2, 2);
     this.camera.lookAt(new Vector3(0, 0, 0));
   }
 

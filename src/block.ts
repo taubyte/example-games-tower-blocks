@@ -1,11 +1,18 @@
-import { BoxGeometry, Matrix4, Mesh, MeshToonMaterial, Vector3 } from 'three';
+import { BoxGeometry, Matrix4, Mesh, MeshToonMaterial } from 'three';
 
 export class Block {
   private mesh: Mesh;
   private material: MeshToonMaterial;
-  private position: Vector3 = new Vector3();
+
+  private width: number;
+  private height: number;
+  private depth: number;
 
   constructor(width: number, height: number, depth: number) {
+    this.width = width;
+    this.height = height;
+    this.depth = depth;
+
     const geometry = new BoxGeometry(width, height, depth);
 
     geometry.applyMatrix4(
@@ -17,10 +24,21 @@ export class Block {
     });
 
     this.mesh = new Mesh(geometry, this.material);
-    this.mesh.position.set(this.position.x, this.position.y, this.position.z);
+  }
+
+  public get position() {
+    return this.mesh.position;
   }
 
   public getMesh() {
     return this.mesh;
+  }
+
+  public getDimesion() {
+    return { width: this.width, height: this.height, depth: this.depth };
+  }
+
+  public setColor(color: number) {
+    this.material.color.set(color);
   }
 }
