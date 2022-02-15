@@ -28,7 +28,16 @@ export class Stage {
   }
 
   public resize(width: number, height: number) {
+    const aspect = width / height;
+    const viewSize = 20;
+    this.camera.left = -viewSize * aspect;
+    this.camera.right = viewSize * aspect;
+    this.camera.top = viewSize;
+    this.camera.bottom = -viewSize;
+    this.camera.updateProjectionMatrix();
+
     this.renderer.setSize(width, height);
+    this.render();
   }
 
   public add(object: Object3D) {
@@ -49,16 +58,9 @@ export class Stage {
   }
 
   private setupCamera() {
-    const aspect = window.innerWidth / window.innerHeight;
-    const frustum = 20;
-    this.camera = new OrthographicCamera(
-      -frustum * aspect,
-      frustum * aspect,
-      frustum,
-      -frustum,
-      -100,
-      1000,
-    );
+    this.camera = new OrthographicCamera();
+    this.camera.near = -100;
+    this.camera.far = 1000;
     this.camera.position.x = 2;
     this.camera.position.y = 2;
     this.camera.position.z = 2;
