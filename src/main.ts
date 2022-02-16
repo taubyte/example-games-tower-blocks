@@ -6,14 +6,20 @@ function onResize() {
   game.resize(window.innerWidth, window.innerHeight);
 }
 
-function onTouch(event: TouchEvent) {
+function onTouchStart(event: TouchEvent) {
   event.preventDefault();
   game.action();
 }
 
-function onClick(event: MouseEvent) {
+function onMouseDown(event: MouseEvent) {
   event.preventDefault();
   game.action();
+}
+
+function onKeyDown(event: KeyboardEvent) {
+  if (event.code === 'Space') {
+    game.action();
+  }
 }
 
 function onLoad() {
@@ -22,8 +28,9 @@ function onLoad() {
 
   window.addEventListener('resize', onResize, false);
   window.addEventListener('orientationchange', onResize, false);
-  window.addEventListener('touchstart', onTouch, { passive:false });
-  window.addEventListener('mousedown', onClick, false);
+  window.addEventListener('touchstart', onTouchStart, { passive: false });
+  window.addEventListener('mousedown', onMouseDown, false);
+  window.addEventListener('keydown', onKeyDown, false);
 }
 
 window.addEventListener('load', onLoad, false);
