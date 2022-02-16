@@ -20,6 +20,9 @@ module.exports = {
       { exceptAfterSingleLine: true },
     ],
     "no-multi-spaces": ["error"],
-    "space-in-parens": ["error"]
+    "space-in-parens": ["error"],
+    "semi-spacing": ["error"],
+    "space-before-blocks": ["error"],
+    "key-spacing": ["error", { "afterColon": true }]
   },
 };

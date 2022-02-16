@@ -28,6 +28,14 @@ export class Block {
     return this.mesh.position;
   }
 
+  public get scale() {
+    return this.mesh.scale;
+  }
+
+  public get rotation() {
+    return this.mesh.rotation;
+  }
+
   public get width() {
     return this.dimension.width;
   }

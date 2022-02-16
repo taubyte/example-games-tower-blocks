@@ -1,4 +1,4 @@
-import { update as tweenjsUpdate } from '@tweenjs/tween.js';
+import { Easing, Tween, update as tweenjsUpdate } from '@tweenjs/tween.js';
 import { Block } from './block';
 import { Stage } from './stage';
 
@@ -86,6 +86,43 @@ export class Game {
 
   private restartGame() {
     this.updateState('resetting');
+
+    const length = this.blocks.length;
+    const duration = 200;
+    const delay = 20;
+
+    for (let i = length - 1; i > 0; i--) {
+      new Tween(this.blocks[i].scale)
+        .to({ x: 0, y: 0, z: 0 }, duration)
+        .delay((length - i - 1) * delay)
+        .easing(Easing.Cubic.In)
+        .onComplete(() => {
+          this.stage.remove(this.blocks[i].getMesh());
+        })
+        .start();
+
+      new Tween(this.blocks[i].rotation)
+        .to({ y: 0.5 }, duration)
+        .delay((length - i - 1) * delay)
+        .easing(Easing.Cubic.In)
+        .start();
+    }
+
+    const cameraMoveSpeed = duration * 2 + length * delay;
+    this.stage.setCamera(2, cameraMoveSpeed);
+
+    const countdown = { value: length - 1 - 1 };
+    new Tween(countdown)
+      .to({ value: 0 }, cameraMoveSpeed)
+      .onUpdate(() => {
+        this.scoreContainer.innerHTML = String(Math.floor(countdown.value));
+      })
+      .start();
+
+    setTimeout(() => {
+      this.blocks = this.blocks.slice(0, 1);
+      this.startGame();
+    }, cameraMoveSpeed);
   }
 
   private endGame() {
