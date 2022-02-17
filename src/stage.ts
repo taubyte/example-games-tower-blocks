@@ -24,11 +24,11 @@ export class Stage {
     this.setupLights();
   }
 
-  public render() {
+  public render(): void {
     this.renderer.render(this.scene, this.camera);
   }
 
-  public resize(width: number, height: number) {
+  public resize(width: number, height: number): void {
     const aspect = width / height;
     const viewSize = 30;
     this.camera.left = -viewSize * aspect;
@@ -39,19 +39,19 @@ export class Stage {
     this.renderer.setSize(width, height);
   }
 
-  public add(object: Object3D) {
+  public add(object: Object3D): void {
     this.scene.add(object);
   }
 
-  public remove(object: Object3D) {
+  public remove(object: Object3D): void {
     this.scene.remove(object);
   }
 
-  public setCameraPosition(x: number, y: number, z: number) {
+  public setCameraPosition(x: number, y: number, z: number): void {
     this.camera.position.set(x, y, z);
   }
 
-  private setupRenderer() {
+  private setupRenderer(): void {
     this.renderer = new WebGLRenderer({
       antialias: true,
       alpha: false,
@@ -60,7 +60,7 @@ export class Stage {
     this.container.appendChild(this.renderer.domElement);
   }
 
-  private setupCamera() {
+  private setupCamera(): void {
     this.camera = new OrthographicCamera();
     this.camera.near = -100;
     this.camera.far = 1000;
@@ -68,7 +68,7 @@ export class Stage {
     this.camera.lookAt(new Vector3(0, 0, 0));
   }
 
-  private setupLights() {
+  private setupLights(): void {
     const directionalLight = new DirectionalLight(0xffffff, 0.5);
     directionalLight.position.set(0, 500, 0);
     this.add(directionalLight);
@@ -77,7 +77,7 @@ export class Stage {
     this.add(ambientLight);
   }
 
-  public setCamera(y: number, duration: number = 300) {
+  public setCamera(y: number, duration: number = 300): void {
     new Tween(this.camera.position)
       .to({ y }, duration)
       .easing(Easing.Cubic.Out)

@@ -1,15 +1,17 @@
-import { BoxGeometry, Matrix4, Mesh, MeshToonMaterial, Vector3 } from 'three';
+import { BoxGeometry, Euler, Matrix4, Mesh, MeshToonMaterial, Vector3 } from 'three';
+
+interface IDimension {
+  width: number;
+  height: number;
+  depth: number;
+}
 
 export class Block {
   public direction: Vector3 = new Vector3(0, 0, 0);
 
   private mesh: Mesh;
   private material: MeshToonMaterial;
-  private dimension: {
-    width: number;
-    height: number;
-    depth: number;
-  };
+  private dimension: IDimension;
 
   constructor(width: number, height: number, depth: number) {
     this.dimension = { width, height, depth };
@@ -24,43 +26,43 @@ export class Block {
     this.mesh = new Mesh(geometry, this.material);
   }
 
-  public get position() {
+  public get position(): Vector3 {
     return this.mesh.position;
   }
 
-  public get scale() {
+  public get scale(): Vector3 {
     return this.mesh.scale;
   }
 
-  public get rotation() {
+  public get rotation(): Euler {
     return this.mesh.rotation;
   }
 
-  public get width() {
+  public get width(): number {
     return this.dimension.width;
   }
 
-  public get height() {
+  public get height(): number {
     return this.dimension.height;
   }
 
-  public get depth() {
+  public get depth(): number {
     return this.dimension.depth;
   }
 
-  public getMesh() {
+  public getMesh(): Mesh {
     return this.mesh;
   }
 
-  public getDimension() {
+  public getDimension(): IDimension {
     return this.dimension;
   }
 
-  public setColor(color: number) {
+  public setColor(color: number): void {
     this.material.color.set(color);
   }
 
-  public moveScalar(scalar: number) {
+  public moveScalar(scalar: number): void {
     this.position.set(
       this.position.x + this.direction.x * scalar,
       this.position.y + this.direction.y * scalar,
@@ -68,7 +70,7 @@ export class Block {
     );
   }
 
-  public cut(targetBlock: Block) {
+  public cut(targetBlock: Block): boolean {
     if (this.direction.x !== 0) {
       const overlap = targetBlock.width - Math.abs(this.position.x - targetBlock.position.x);
       if (overlap < 0) return false;
@@ -93,5 +95,6 @@ export class Block {
     );
 
     this.mesh.geometry.copy(geometry);
+    return true;
   }
 }

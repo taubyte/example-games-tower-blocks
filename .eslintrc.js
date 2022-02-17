@@ -19,6 +19,8 @@ module.exports = {
       'always',
       { exceptAfterSingleLine: true },
     ],
+    "@typescript-eslint/explicit-function-return-type": ["error"],
+    "@typescript-eslint/type-annotation-spacing": ["error"],
     "no-multi-spaces": ["error"],
     "space-in-parens": ["error"],
     "semi-spacing": ["error"],

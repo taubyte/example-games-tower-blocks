@@ -16,7 +16,7 @@ export class Game {
 
   private colorOffset: number;
 
-  public prepare(width: number, height: number) {
+  public prepare(width: number, height: number): void {
     this.mainContainer = document.getElementById('container');
     this.scoreContainer = document.getElementById('score');
     this.instructions = document.getElementById('instructions');
@@ -31,15 +31,15 @@ export class Game {
     this.updateState('ready');
   }
 
-  public start() {
+  public start(): void {
     this.update();
   }
 
-  public pause() {
+  public pause(): void {
     cancelAnimationFrame(this.requestId);
   }
 
-  public update() {
+  public update(): void {
     this.requestId = requestAnimationFrame((time: number) => {
       tweenjsUpdate(time);
       this.moveCurrentBlock();
@@ -48,21 +48,21 @@ export class Game {
     });
   }
 
-  public render() {
+  public render(): void {
     this.stage.render();
   }
 
-  public resize(width: number, height: number) {
+  public resize(width: number, height: number): void {
     this.stage.resize(width, height);
   }
 
-  private updateState(newState: GameState) {
+  private updateState(newState: GameState): void {
     this.mainContainer.classList.remove(this.state);
     this.state = newState;
     this.mainContainer.classList.add(this.state);
   }
 
-  public action() {
+  public action(): void {
     switch (this.state) {
       case 'ready':
         this.startGame();
@@ -76,7 +76,7 @@ export class Game {
     }
   }
 
-  private startGame() {
+  private startGame(): void {
     if (this.state === 'playing') return;
     this.colorOffset = Math.round(Math.random() * 100);
     this.scoreContainer.innerHTML = '0';
@@ -84,7 +84,7 @@ export class Game {
     this.addBlock(this.blocks[0]);
   }
 
-  private restartGame() {
+  private restartGame(): void {
     this.updateState('resetting');
 
     const length = this.blocks.length;
@@ -125,11 +125,11 @@ export class Game {
     }, cameraMoveSpeed);
   }
 
-  private endGame() {
+  private endGame(): void {
     this.updateState('ended');
   }
 
-  private placeBlock() {
+  private placeBlock(): void {
     const length = this.blocks.length;
     const targetBlock = this.blocks[length - 2];
     const currentBlock = this.blocks[length - 1];
@@ -144,14 +144,14 @@ export class Game {
     }
   }
 
-  private addBaseBlock() {
+  private addBaseBlock(): void {
     const block = new Block(10, 2, 10);
     this.stage.add(block.getMesh());
     this.blocks.push(block);
     block.setColor(0x333344);
   }
 
-  private addBlock(targetBlock: Block) {
+  private addBlock(targetBlock: Block): void {
     const length = this.blocks.length;
 
     const block = new Block(targetBlock.width, targetBlock.height, targetBlock.depth);
@@ -178,7 +178,7 @@ export class Game {
     if (length >= 5) this.instructions.classList.add('hide');
   }
 
-  private moveCurrentBlock() {
+  private moveCurrentBlock(): void {
     if (this.state !== 'playing') return;
 
     const length = this.blocks.length;
@@ -189,7 +189,7 @@ export class Game {
     currentBlock.moveScalar(speed);
   }
 
-  private getNextBlockColor() {
+  private getNextBlockColor(): number {
     const offset = this.blocks.length + this.colorOffset;
     const r = Math.sin(0.3 * offset) * 55 + 200;
     const g = Math.sin(0.3 * offset + 2) * 55 + 200;

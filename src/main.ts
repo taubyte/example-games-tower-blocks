@@ -2,27 +2,27 @@ import { Game } from './game';
 
 const game = new Game();
 
-function onResize() {
+function onResize(): void {
   game.resize(window.innerWidth, window.innerHeight);
 }
 
-function onTouchStart(event: TouchEvent) {
+function onTouchStart(event: TouchEvent): void {
   event.preventDefault();
   game.action();
 }
 
-function onMouseDown(event: MouseEvent) {
+function onMouseDown(event: MouseEvent): void {
   event.preventDefault();
   game.action();
 }
 
-function onKeyDown(event: KeyboardEvent) {
+function onKeyDown(event: KeyboardEvent): void {
   if (event.code === 'Space') {
     game.action();
   }
 }
 
-function onLoad() {
+function onLoad(): void {
   game.prepare(window.innerWidth, window.innerHeight);
   game.start();
 
