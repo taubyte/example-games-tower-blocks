@@ -65,20 +65,24 @@ export class Block {
 
   public cut(targetBlock: Block): boolean {
     if (Math.abs(this.direction.x) > Number.EPSILON) {
-      const overlap = targetBlock.width - Math.abs(this.position.x - targetBlock.position.x);
+      const overlap =
+        targetBlock.width - Math.abs(this.position.x - targetBlock.position.x);
       if (overlap < 0) return false;
 
-      this.dimension.width = overlap;  
+      this.dimension.width = overlap;
       this.position.x = (targetBlock.position.x + this.position.x) * 0.5;
     } else {
-      const overlap = targetBlock.depth - Math.abs(this.position.z - targetBlock.position.z);  
+      const overlap =
+        targetBlock.depth - Math.abs(this.position.z - targetBlock.position.z);
       if (overlap < 0) return false;
 
       this.dimension.depth = overlap;
       this.position.z = (targetBlock.position.z + this.position.z) * 0.5;
     }
 
-    this.mesh.geometry.copy(new BoxGeometry(this.width, this.height, this.depth));
+    this.mesh.geometry.copy(
+      new BoxGeometry(this.width, this.height, this.depth),
+    );
 
     return true;
   }

@@ -155,7 +155,11 @@ export class Game {
   private addBlock(targetBlock: Block): void {
     const length = this.blocks.length;
 
-    const block = new Block(targetBlock.width, targetBlock.height, targetBlock.depth);
+    const block = new Block(
+      targetBlock.width,
+      targetBlock.height,
+      targetBlock.depth,
+    );
     this.stage.add(block.getMesh());
     this.blocks.push(block);
 
@@ -172,7 +176,7 @@ export class Game {
       block.direction.z = Math.random() > 0.5 ? 1 : -1;
     }
 
-    block.moveScalar(-12);
+    block.moveScalar(12);
     this.stage.setCamera(block.position.y + 6);
 
     this.scoreContainer.innerHTML = String(length - 1);
@@ -185,9 +189,34 @@ export class Game {
     const length = this.blocks.length;
     if (length < 2) return;
 
+    const targetBlock = this.blocks[length - 2];
     const currentBlock = this.blocks[length - 1];
-    const speed = 0.2;
+
+    const speed = 0.2 + Math.min(0.002 * length, 0.3);
     currentBlock.moveScalar(speed);
+
+    // reverse direction
+    if (
+      currentBlock.direction.x === 1 &&
+      currentBlock.position.x - targetBlock.position.x > 12
+    ) {
+      currentBlock.direction.x = -1;
+    } else if (
+      currentBlock.direction.x === -1 &&
+      currentBlock.position.x - targetBlock.position.x < -12
+    ) {
+      currentBlock.direction.x = 1;
+    } else if (
+      currentBlock.direction.z === 1 &&
+      currentBlock.position.z - targetBlock.position.z > 12
+    ) {
+      currentBlock.direction.z = -1;
+    } else if (
+      currentBlock.direction.z === -1 &&
+      currentBlock.position.z - targetBlock.position.z < -12
+    ) {
+      currentBlock.direction.z = 1;
+    }
   }
 
   private getNextBlockColor(): number {
@@ -195,6 +224,6 @@ export class Game {
     const r = Math.sin(0.3 * offset) * 55 + 200;
     const g = Math.sin(0.3 * offset + 2) * 55 + 200;
     const b = Math.sin(0.3 * offset + 4) * 55 + 200;
-    return (r << 16) + (g << 8) + (b);
+    return (r << 16) + (g << 8) + b;
   }
 }
