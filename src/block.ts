@@ -19,29 +19,21 @@ export class Block {
     this.mesh = new Mesh(new BoxGeometry(width, height, depth), this.material);
   }
 
-  public get position(): Vector3 {
-    return this.mesh.position;
-  }
+  public get position(): Vector3 { return this.mesh.position; }
+  public get rotation(): Euler { return this.mesh.rotation; }
+  public get scale(): Vector3 { return this.mesh.scale; }
 
-  public get scale(): Vector3 {
-    return this.mesh.scale;
-  }
+  public get x(): number { return this.mesh.position.x; }
+  public get y(): number { return this.mesh.position.y; }
+  public get z(): number { return this.mesh.position.z; }
 
-  public get rotation(): Euler {
-    return this.mesh.rotation;
-  }
+  public set x(value: number) { this.mesh.position.x = value; }
+  public set y(value: number) { this.mesh.position.y = value; }
+  public set z(value: number) { this.mesh.position.z = value; }
 
-  public get width(): number {
-    return this.dimension.width;
-  }
-
-  public get height(): number {
-    return this.dimension.height;
-  }
-
-  public get depth(): number {
-    return this.dimension.depth;
-  }
+  public get width(): number { return this.dimension.width; }
+  public get height(): number { return this.dimension.height; }
+  public get depth(): number { return this.dimension.depth; }
 
   public getMesh(): Mesh {
     return this.mesh;

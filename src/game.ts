@@ -149,27 +149,21 @@ export class Game {
     this.stage.add(block.getMesh());
     this.blocks.push(block);
     block.setColor(0x333344);
-    block.position.y = -6;
+    block.y = -6;
   }
 
   private addBlock(targetBlock: Block): void {
-    const length = this.blocks.length;
+    const { width, height, depth } = targetBlock.getDimension();
 
-    const block = new Block(
-      targetBlock.width,
-      targetBlock.height,
-      targetBlock.depth,
-    );
+    const block = new Block(width, height, depth);
     this.stage.add(block.getMesh());
     this.blocks.push(block);
 
     block.setColor(this.getNextBlockColor());
-    block.position.set(
-      targetBlock.position.x,
-      targetBlock.position.y + targetBlock.height,
-      targetBlock.position.z,
-    );
+    block.position.copy(targetBlock.position);
+    block.y += targetBlock.height;
 
+    const length = this.blocks.length;
     if (length % 2 === 0) {
       block.direction.x = Math.random() > 0.5 ? 1 : -1;
     } else {
@@ -177,7 +171,7 @@ export class Game {
     }
 
     block.moveScalar(12);
-    this.stage.setCamera(block.position.y + 6);
+    this.stage.setCamera(block.y + 6);
 
     this.scoreContainer.innerHTML = String(length - 1);
     if (length >= 5) this.instructions.classList.add('hide');
@@ -189,33 +183,37 @@ export class Game {
     const length = this.blocks.length;
     if (length < 2) return;
 
+    const speed = 0.2 + Math.min(0.002 * length, 0.3);
+    this.blocks[length - 1].moveScalar(speed);
+
+    this.reverseDirection();
+  }
+
+  private reverseDirection(): void {
+    const length = this.blocks.length;
+    if (length < 2) return;
+
     const targetBlock = this.blocks[length - 2];
     const currentBlock = this.blocks[length - 1];
 
-    const speed = 0.2 + Math.min(0.002 * length, 0.3);
-    currentBlock.moveScalar(speed);
-
-    // reverse direction
-    if (
-      currentBlock.direction.x === 1 &&
-      currentBlock.position.x - targetBlock.position.x > 12
-    ) {
+    const diffX = currentBlock.x - targetBlock.x;
+    if (currentBlock.direction.x === 1 && diffX > 12) {
       currentBlock.direction.x = -1;
-    } else if (
-      currentBlock.direction.x === -1 &&
-      currentBlock.position.x - targetBlock.position.x < -12
-    ) {
+      return;
+    }
+    if (currentBlock.direction.x === -1 && diffX < -12) {
       currentBlock.direction.x = 1;
-    } else if (
-      currentBlock.direction.z === 1 &&
-      currentBlock.position.z - targetBlock.position.z > 12
-    ) {
+      return;
+    }
+    
+    const diffZ = currentBlock.z - targetBlock.z;
+    if (currentBlock.direction.z === 1 && diffZ > 12) {
       currentBlock.direction.z = -1;
-    } else if (
-      currentBlock.direction.z === -1 &&
-      currentBlock.position.z - targetBlock.position.z < -12
-    ) {
+      return;
+    }
+    if (currentBlock.direction.z === -1 && diffZ < -12) {
       currentBlock.direction.z = 1;
+      return;
     }
   }
 
