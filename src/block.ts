@@ -1,4 +1,4 @@
-import { BoxGeometry, Euler, Matrix4, Mesh, MeshToonMaterial, Vector3 } from 'three';
+import { BoxGeometry, Euler, Mesh, MeshToonMaterial, Vector3 } from 'three';
 
 interface IDimension {
   width: number;
@@ -15,15 +15,8 @@ export class Block {
 
   constructor(width: number, height: number, depth: number) {
     this.dimension = { width, height, depth };
-
-    const geometry = new BoxGeometry(width, height, depth);
-    geometry.applyMatrix4(
-      new Matrix4().makeTranslation(width / 2, height / 2, depth / 2),
-    );
-
     this.material = new MeshToonMaterial();
-
-    this.mesh = new Mesh(geometry, this.material);
+    this.mesh = new Mesh(new BoxGeometry(width, height, depth), this.material);
   }
 
   public get position(): Vector3 {
@@ -71,30 +64,22 @@ export class Block {
   }
 
   public cut(targetBlock: Block): boolean {
-    if (this.direction.x !== 0) {
+    if (Math.abs(this.direction.x) > Number.EPSILON) {
       const overlap = targetBlock.width - Math.abs(this.position.x - targetBlock.position.x);
       if (overlap < 0) return false;
 
       this.dimension.width = overlap;  
-      if (this.position.x < targetBlock.position.x) {
-        this.position.x = targetBlock.position.x;
-      }
+      this.position.x = (targetBlock.position.x + this.position.x) * 0.5;
     } else {
       const overlap = targetBlock.depth - Math.abs(this.position.z - targetBlock.position.z);  
       if (overlap < 0) return false;
 
       this.dimension.depth = overlap;
-      if (this.position.z < targetBlock.position.z) {
-        this.position.z = targetBlock.position.z;
-      }
+      this.position.z = (targetBlock.position.z + this.position.z) * 0.5;
     }
 
-    const geometry = new BoxGeometry(this.width, this.height, this.depth);
-    geometry.applyMatrix4(
-      new Matrix4().makeTranslation(this.width / 2, this.height / 2, this.depth / 2),
-    );
+    this.mesh.geometry.copy(new BoxGeometry(this.width, this.height, this.depth));
 
-    this.mesh.geometry.copy(geometry);
     return true;
   }
 }

@@ -149,6 +149,7 @@ export class Game {
     this.stage.add(block.getMesh());
     this.blocks.push(block);
     block.setColor(0x333344);
+    block.position.y = -6;
   }
 
   private addBlock(targetBlock: Block): void {
@@ -161,7 +162,7 @@ export class Game {
     block.setColor(this.getNextBlockColor());
     block.position.set(
       targetBlock.position.x,
-      targetBlock.height * length,
+      targetBlock.position.y + targetBlock.height,
       targetBlock.position.z,
     );
 
@@ -171,8 +172,8 @@ export class Game {
       block.direction.z = Math.random() > 0.5 ? 1 : -1;
     }
 
-    block.moveScalar(12);
-    this.stage.setCamera(block.position.y);
+    block.moveScalar(-12);
+    this.stage.setCamera(block.position.y + 6);
 
     this.scoreContainer.innerHTML = String(length - 1);
     if (length >= 5) this.instructions.classList.add('hide');
@@ -185,7 +186,7 @@ export class Game {
     if (length < 2) return;
 
     const currentBlock = this.blocks[length - 1];
-    const speed = -0.2;
+    const speed = 0.2;
     currentBlock.moveScalar(speed);
   }
 
