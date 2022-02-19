@@ -1,46 +1,47 @@
 import { BoxGeometry, Euler, Mesh, MeshToonMaterial, Vector3 } from 'three';
 
-interface IDimension {
-  width: number;
-  height: number;
-  depth: number;
-}
-
 export class Block {
   public direction: Vector3 = new Vector3(0, 0, 0);
 
   private mesh: Mesh;
   private material: MeshToonMaterial;
-  private dimension: IDimension;
 
-  constructor(width: number, height: number, depth: number) {
-    this.dimension = { width, height, depth };
+  constructor(scale: Vector3) {
     this.material = new MeshToonMaterial();
-    this.mesh = new Mesh(new BoxGeometry(width, height, depth), this.material);
+    this.mesh = new Mesh(new BoxGeometry(1, 1, 1), this.material);
+    this.mesh.scale.copy(scale);
   }
 
+  // prettier-ignore
   public get position(): Vector3 { return this.mesh.position; }
+  // prettier-ignore
   public get rotation(): Euler { return this.mesh.rotation; }
+  // prettier-ignore
   public get scale(): Vector3 { return this.mesh.scale; }
 
+  // prettier-ignore
   public get x(): number { return this.mesh.position.x; }
+  // prettier-ignore
   public get y(): number { return this.mesh.position.y; }
+  // prettier-ignore
   public get z(): number { return this.mesh.position.z; }
 
+  // prettier-ignore
   public set x(value: number) { this.mesh.position.x = value; }
+  // prettier-ignore
   public set y(value: number) { this.mesh.position.y = value; }
+  // prettier-ignore
   public set z(value: number) { this.mesh.position.z = value; }
 
-  public get width(): number { return this.dimension.width; }
-  public get height(): number { return this.dimension.height; }
-  public get depth(): number { return this.dimension.depth; }
+  // prettier-ignore
+  public get width(): number { return this.scale.x; }
+  // prettier-ignore
+  public get height(): number { return this.scale.y; }
+  // prettier-ignore
+  public get depth(): number { return this.scale.z; }
 
   public getMesh(): Mesh {
     return this.mesh;
-  }
-
-  public getDimension(): IDimension {
-    return this.dimension;
   }
 
   public setColor(color: number): void {
@@ -57,24 +58,18 @@ export class Block {
 
   public cut(targetBlock: Block): boolean {
     if (Math.abs(this.direction.x) > Number.EPSILON) {
-      const overlap =
-        targetBlock.width - Math.abs(this.position.x - targetBlock.position.x);
+      const overlap = targetBlock.width - Math.abs(this.x - targetBlock.x);
       if (overlap < 0) return false;
 
-      this.dimension.width = overlap;
-      this.position.x = (targetBlock.position.x + this.position.x) * 0.5;
+      this.scale.x = overlap;
+      this.position.x = (targetBlock.x + this.x) * 0.5;
     } else {
-      const overlap =
-        targetBlock.depth - Math.abs(this.position.z - targetBlock.position.z);
+      const overlap = targetBlock.depth - Math.abs(this.z - targetBlock.z);
       if (overlap < 0) return false;
 
-      this.dimension.depth = overlap;
-      this.position.z = (targetBlock.position.z + this.position.z) * 0.5;
+      this.scale.z = overlap;
+      this.position.z = (targetBlock.z + this.z) * 0.5;
     }
-
-    this.mesh.geometry.copy(
-      new BoxGeometry(this.width, this.height, this.depth),
-    );
 
     return true;
   }

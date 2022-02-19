@@ -1,4 +1,5 @@
 import { Easing, Tween, update as tweenjsUpdate } from '@tweenjs/tween.js';
+import { Vector3 } from 'three';
 import { Block } from './block';
 import { Stage } from './stage';
 
@@ -145,7 +146,7 @@ export class Game {
   }
 
   private addBaseBlock(): void {
-    const block = new Block(10, 2, 10);
+    const block = new Block(new Vector3(10, 2, 10));
     this.stage.add(block.getMesh());
     this.blocks.push(block);
     block.setColor(0x333344);
@@ -153,9 +154,7 @@ export class Game {
   }
 
   private addBlock(targetBlock: Block): void {
-    const { width, height, depth } = targetBlock.getDimension();
-
-    const block = new Block(width, height, depth);
+    const block = new Block(targetBlock.scale);
     this.stage.add(block.getMesh());
     this.blocks.push(block);
 
