@@ -40,12 +40,13 @@ export class Block {
   // prettier-ignore
   public get depth(): number { return this.scale.z; }
 
+  // prettier-ignore
+  public get color(): number { return this.material.color.getHex(); }
+  // prettier-ignore
+  public set color(value: number) { this.material.color.set(value); }
+
   public getMesh(): Mesh {
     return this.mesh;
-  }
-
-  public setColor(color: number): void {
-    this.material.color.set(color);
   }
 
   public moveScalar(scalar: number): void {
@@ -56,21 +57,34 @@ export class Block {
     );
   }
 
-  public cut(targetBlock: Block): boolean {
+  public cut(targetBlock: Block): { position: Vector3; scale: Vector3 } {
+    const position = this.position.clone();
+    const scale = this.scale.clone();
+
     if (Math.abs(this.direction.x) > Number.EPSILON) {
       const overlap = targetBlock.width - Math.abs(this.x - targetBlock.x);
-      if (overlap < 0) return false;
+      if (overlap < 0) return undefined; // missed
 
       this.scale.x = overlap;
-      this.position.x = (targetBlock.x + this.x) * 0.5;
+      this.x = (targetBlock.x + this.x) * 0.5;
+
+      // chopped
+      scale.x -= overlap;
+      position.x =
+        this.x + (scale.x + this.width) * (this.x < targetBlock.x ? -0.5 : 0.5);
     } else {
       const overlap = targetBlock.depth - Math.abs(this.z - targetBlock.z);
-      if (overlap < 0) return false;
+      if (overlap < 0) return undefined; // missed
 
       this.scale.z = overlap;
-      this.position.z = (targetBlock.z + this.z) * 0.5;
+      this.z = (targetBlock.z + this.z) * 0.5;
+
+      // chopped
+      scale.z -= overlap;
+      position.z =
+        this.z + (scale.z + this.depth) * (this.z < targetBlock.z ? -0.5 : 0.5);
     }
 
-    return true;
+    return { position, scale };
   }
 }

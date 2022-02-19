@@ -136,12 +136,13 @@ export class Game {
     const currentBlock = this.blocks[length - 1];
 
     const result = currentBlock.cut(targetBlock);
-    if (result === false) {
+    if (result === undefined) {
       this.stage.remove(currentBlock.getMesh());
       this.endGame();
     } else {
       this.scoreContainer.innerHTML = String(length - 1);
       this.addBlock(currentBlock);
+      this.addChoppedBlock(result.position, result.scale, currentBlock);
     }
   }
 
@@ -149,7 +150,7 @@ export class Game {
     const block = new Block(new Vector3(10, 2, 10));
     this.stage.add(block.getMesh());
     this.blocks.push(block);
-    block.setColor(0x333344);
+    block.color = 0x333344;
     block.y = -6;
   }
 
@@ -158,7 +159,7 @@ export class Game {
     this.stage.add(block.getMesh());
     this.blocks.push(block);
 
-    block.setColor(this.getNextBlockColor());
+    block.color = this.getNextBlockColor();
     block.position.copy(targetBlock.position);
     block.y += targetBlock.height;
 
@@ -176,13 +177,46 @@ export class Game {
     if (length >= 5) this.instructions.classList.add('hide');
   }
 
+  private addChoppedBlock(
+    position: Vector3,
+    scale: Vector3,
+    sourceBlock: Block,
+  ): void {
+    const block = new Block(scale);
+    this.stage.add(block.getMesh());
+    block.position.copy(position);
+    block.color = sourceBlock.color;
+
+    const dirX = Math.sign(block.x - sourceBlock.x);
+    const dirZ = Math.sign(block.z - sourceBlock.z);
+    new Tween(block.position)
+      .to(
+        {
+          x: block.x + dirX * 10,
+          y: block.y - 30,
+          z: block.z + dirZ * 10,
+        },
+        1000,
+      )
+      .easing(Easing.Quadratic.In)
+      .onComplete(() => {
+        this.stage.remove(block.getMesh());
+      })
+      .start();
+
+    new Tween(block.rotation)
+      .to({ x: dirZ * 5, z: dirX * -5 }, 1000)
+      .delay(50)
+      .start();
+  }
+
   private moveCurrentBlock(): void {
     if (this.state !== 'playing') return;
 
     const length = this.blocks.length;
     if (length < 2) return;
 
-    const speed = 0.2 + Math.min(0.002 * length, 0.3);
+    const speed = 0.2 + Math.min(0.001 * length, 0.3);
     this.blocks[length - 1].moveScalar(speed);
 
     this.reverseDirection();
@@ -204,7 +238,7 @@ export class Game {
       currentBlock.direction.x = 1;
       return;
     }
-    
+
     const diffZ = currentBlock.z - targetBlock.z;
     if (currentBlock.direction.z === 1 && diffZ > 12) {
       currentBlock.direction.z = -1;
