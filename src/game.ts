@@ -9,6 +9,8 @@ export class Game {
   private mainContainer: HTMLElement;
   private scoreContainer: HTMLElement;
   private instructions: HTMLElement;
+
+  private lastTime: number;
   private requestId: number;
 
   private state: GameState = 'loading';
@@ -33,28 +35,39 @@ export class Game {
   }
 
   public start(): void {
-    this.update();
+    this.lastTime = 0;
+    this.frame();
   }
 
   public pause(): void {
     cancelAnimationFrame(this.requestId);
   }
 
-  public update(): void {
+  public resize(width: number, height: number): void {
+    this.stage.resize(width, height);
+  }
+
+  private frame(): void {
     this.requestId = requestAnimationFrame((time: number) => {
       tweenjsUpdate(time);
-      this.moveCurrentBlock();
+
+      const deltaTime = (time - this.lastTime) / 1000;
+
+      this.update(deltaTime); 
       this.render();
-      this.update();
+
+      this.lastTime = time;
+
+      this.frame();
     });
   }
 
-  public render(): void {
-    this.stage.render();
+  private update(deltaTime: number): void {
+    this.moveCurrentBlock(deltaTime);
   }
 
-  public resize(width: number, height: number): void {
-    this.stage.resize(width, height);
+  private render(): void {
+    this.stage.render();
   }
 
   private updateState(newState: GameState): void {
@@ -210,14 +223,14 @@ export class Game {
       .start();
   }
 
-  private moveCurrentBlock(): void {
+  private moveCurrentBlock(deltaTime: number): void {
     if (this.state !== 'playing') return;
 
     const length = this.blocks.length;
     if (length < 2) return;
 
-    const speed = 0.2 + Math.min(0.001 * length, 0.3);
-    this.blocks[length - 1].moveScalar(speed);
+    const speed = 10 + Math.min(0.05 * length, 5);
+    this.blocks[length - 1].moveScalar(speed * deltaTime);
 
     this.reverseDirection();
   }
