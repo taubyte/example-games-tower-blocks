@@ -5,9 +5,9 @@ import {
   Object3D,
   OrthographicCamera,
   Scene,
-  Vector3,
   WebGLRenderer,
 } from 'three';
+import config from './config.json';
 
 export class Stage {
   private container: HTMLElement;
@@ -21,7 +21,8 @@ export class Stage {
 
     this.setupRenderer();
     this.setupCamera();
-    this.setupLights();
+    this.setupDirectionalLight();
+    this.setupAmbientLight();
   }
 
   public render(): void {
@@ -30,7 +31,7 @@ export class Stage {
 
   public resize(width: number, height: number): void {
     const aspect = width / height;
-    const viewSize = 30;
+    const { viewSize } = config.camera;
     this.camera.left = -viewSize * aspect;
     this.camera.right = viewSize * aspect;
     this.camera.top = viewSize;
@@ -47,39 +48,53 @@ export class Stage {
     this.scene.remove(object);
   }
 
-  public setCameraPosition(x: number, y: number, z: number): void {
-    this.camera.position.set(x, y, z);
-  }
-
   private setupRenderer(): void {
     this.renderer = new WebGLRenderer({
       antialias: true,
       alpha: false,
     });
-    this.renderer.setClearColor('#D0CBC7', 1);
+    this.renderer.setClearColor(parseInt(config.background.color, 16), 1);
     this.container.appendChild(this.renderer.domElement);
   }
 
   private setupCamera(): void {
+    const { near, far, position, lookAt, offset } = config.camera;
     this.camera = new OrthographicCamera();
-    this.camera.near = -100;
-    this.camera.far = 1000;
-    this.setCameraPosition(2, 2, 2);
-    this.camera.lookAt(new Vector3(0, 0, 0));
+    this.camera.near = near;
+    this.camera.far = far;
+    this.camera.position.set(position.x, position.y, position.z);
+    this.camera.lookAt(lookAt.x, lookAt.y, lookAt.z);
+    this.camera.position.y += offset;
   }
 
-  private setupLights(): void {
-    const directionalLight = new DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 500, 0);
+  private setupDirectionalLight(): void {
+    const { color, intensity, position } = config.light.directional;
+    const directionalLight = new DirectionalLight(
+      parseInt(color, 16),
+      intensity,
+    );
+    directionalLight.position.set(position.x, position.y, position.z);
     this.add(directionalLight);
+  }
 
-    const ambientLight = new AmbientLight(0xffffff, 0.4);
+  private setupAmbientLight(): void {
+    const { color, intensity, position } = config.light.ambient;
+    const ambientLight = new AmbientLight(parseInt(color, 16), intensity);
+    ambientLight.position.set(position.x, position.y, position.z);
     this.add(ambientLight);
   }
 
-  public setCamera(y: number, duration: number = 300): void {
+  public setCamera(y: number): void {
     new Tween(this.camera.position)
-      .to({ y }, duration)
+      .to({ y: y + config.camera.offset }, 300)
+      .easing(Easing.Cubic.Out)
+      .start();
+  }
+
+  public resetCamera(duration: number): void {
+    const { position, offset } = config.camera;
+    new Tween(this.camera.position)
+      .to({ y: position.y + offset }, duration)
       .easing(Easing.Cubic.Out)
       .start();
   }

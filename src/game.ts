@@ -2,6 +2,7 @@ import { Easing, Tween, update as tweenjsUpdate } from '@tweenjs/tween.js';
 import { Vector3 } from 'three';
 import { Block } from './block';
 import { Stage } from './stage';
+import config from './config.json';
 
 type GameState = 'loading' | 'ready' | 'playing' | 'ended' | 'resetting';
 
@@ -53,7 +54,7 @@ export class Game {
 
       const deltaTime = (time - this.lastTime) / 1000;
 
-      this.update(deltaTime); 
+      this.update(deltaTime);
       this.render();
 
       this.lastTime = time;
@@ -123,7 +124,7 @@ export class Game {
     }
 
     const cameraMoveSpeed = duration * 2 + length * delay;
-    this.stage.setCamera(2, cameraMoveSpeed);
+    this.stage.resetCamera(cameraMoveSpeed);
 
     const countdown = { value: length - 1 - 1 };
     new Tween(countdown)
@@ -160,11 +161,11 @@ export class Game {
   }
 
   private addBaseBlock(): void {
-    const block = new Block(new Vector3(10, 2, 10));
+    const { scale, color } = config.block.base;
+    const block = new Block(new Vector3(scale.x, scale.y, scale.z));
     this.stage.add(block.getMesh());
     this.blocks.push(block);
-    block.color = 0x333344;
-    block.y = -6;
+    block.color = parseInt(color, 16);
   }
 
   private addBlock(targetBlock: Block): void {
@@ -183,17 +184,19 @@ export class Game {
       block.direction.z = Math.random() > 0.5 ? 1 : -1;
     }
 
-    block.moveScalar(12);
-    this.stage.setCamera(block.y + 6);
+    block.moveScalar(config.gameplay.distance);
+    this.stage.setCamera(block.y);
 
     this.scoreContainer.innerHTML = String(length - 1);
-    if (length >= 5) this.instructions.classList.add('hide');
+    if (length >= config.instructions.height) {
+      this.instructions.classList.add('hide');
+    }
   }
 
   private addChoppedBlock(
     position: Vector3,
     scale: Vector3,
-    sourceBlock: Block,
+    sourceBlock: Block
   ): void {
     const block = new Block(scale);
     this.stage.add(block.getMesh());
@@ -209,7 +212,7 @@ export class Game {
           y: block.y - 30,
           z: block.z + dirZ * 10,
         },
-        1000,
+        1000
       )
       .easing(Easing.Quadratic.In)
       .onComplete(() => {
@@ -242,32 +245,33 @@ export class Game {
     const targetBlock = this.blocks[length - 2];
     const currentBlock = this.blocks[length - 1];
 
+    const { distance } = config.gameplay;
+
     const diffX = currentBlock.x - targetBlock.x;
-    if (currentBlock.direction.x === 1 && diffX > 12) {
-      currentBlock.direction.x = -1;
-      return;
-    }
-    if (currentBlock.direction.x === -1 && diffX < -12) {
-      currentBlock.direction.x = 1;
+    if (
+      (currentBlock.direction.x === 1 && diffX > distance) ||
+      (currentBlock.direction.x === -1 && diffX < -distance)
+    ) {
+      currentBlock.direction.x *= -1;
       return;
     }
 
     const diffZ = currentBlock.z - targetBlock.z;
-    if (currentBlock.direction.z === 1 && diffZ > 12) {
-      currentBlock.direction.z = -1;
-      return;
-    }
-    if (currentBlock.direction.z === -1 && diffZ < -12) {
-      currentBlock.direction.z = 1;
+    if (
+      (currentBlock.direction.z === 1 && diffZ > distance) ||
+      (currentBlock.direction.z === -1 && diffZ < -distance)
+    ) {
+      currentBlock.direction.z *= -1;
       return;
     }
   }
 
   private getNextBlockColor(): number {
+    const { base, range, intesity } = config.block.colors;
     const offset = this.blocks.length + this.colorOffset;
-    const r = Math.sin(0.3 * offset) * 55 + 200;
-    const g = Math.sin(0.3 * offset + 2) * 55 + 200;
-    const b = Math.sin(0.3 * offset + 4) * 55 + 200;
+    const r = base.r + range.r * Math.sin(intesity.r * offset);
+    const g = base.g + range.g * Math.sin(intesity.g * offset);
+    const b = base.b + range.b * Math.sin(intesity.b * offset);
     return (r << 16) + (g << 8) + b;
   }
 }

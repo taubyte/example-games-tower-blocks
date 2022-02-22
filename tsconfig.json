@@ -6,7 +6,9 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "module": "ESNext",
-    "target": "ESNext"
+    "target": "ESNext",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
   },
   "include": [
     "./src/**/*.ts"
