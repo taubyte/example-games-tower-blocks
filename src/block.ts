@@ -1,5 +1,7 @@
 import { BoxGeometry, Euler, Mesh, MeshToonMaterial, Vector3 } from 'three';
 
+type CutState = 'missed' | 'perfect' | 'chopped';
+
 export class Block {
   public direction: Vector3 = new Vector3(0, 0, 0);
 
@@ -57,13 +59,22 @@ export class Block {
     );
   }
 
-  public cut(targetBlock: Block): { position: Vector3; scale: Vector3 } {
+  public cut(targetBlock: Block, accuracy: number): {
+    state: CutState;
+    position?: Vector3;
+    scale?: Vector3;
+  } {
     const position = this.position.clone();
     const scale = this.scale.clone();
 
     if (Math.abs(this.direction.x) > Number.EPSILON) {
       const overlap = targetBlock.width - Math.abs(this.x - targetBlock.x);
-      if (overlap < 0) return undefined; // missed
+      if (overlap < 0) return { state: 'missed' };
+
+      if (this.scale.x - overlap < accuracy) {
+        this.x = targetBlock.x;
+        return { state: 'perfect' };
+      }
 
       this.scale.x = overlap;
       this.x = (targetBlock.x + this.x) * 0.5;
@@ -74,7 +85,12 @@ export class Block {
         this.x + (scale.x + this.width) * (this.x < targetBlock.x ? -0.5 : 0.5);
     } else {
       const overlap = targetBlock.depth - Math.abs(this.z - targetBlock.z);
-      if (overlap < 0) return undefined; // missed
+      if (overlap < 0) return { state: 'missed' };
+
+      if (this.scale.z - overlap < accuracy) {
+        this.z = targetBlock.z;
+        return { state: 'perfect' };
+      }
 
       this.scale.z = overlap;
       this.z = (targetBlock.z + this.z) * 0.5;
@@ -85,6 +101,6 @@ export class Block {
         this.z + (scale.z + this.depth) * (this.z < targetBlock.z ? -0.5 : 0.5);
     }
 
-    return { position, scale };
+    return { state: 'chopped', position, scale };
   }
 }

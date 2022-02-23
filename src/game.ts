@@ -149,13 +149,18 @@ export class Game {
     const targetBlock = this.blocks[length - 2];
     const currentBlock = this.blocks[length - 1];
 
-    const result = currentBlock.cut(targetBlock);
-    if (result === undefined) {
+    const result = currentBlock.cut(targetBlock, config.gameplay.accuracy);
+
+    if (result.state === 'missed') {
       this.stage.remove(currentBlock.getMesh());
       this.endGame();
-    } else {
-      this.scoreContainer.innerHTML = String(length - 1);
-      this.addBlock(currentBlock);
+      return;
+    }
+
+    this.scoreContainer.innerHTML = String(length - 1);
+    this.addBlock(currentBlock);
+
+    if (result.state === 'chopped') {
       this.addChoppedBlock(result.position, result.scale, currentBlock);
     }
   }
@@ -196,7 +201,7 @@ export class Game {
   private addChoppedBlock(
     position: Vector3,
     scale: Vector3,
-    sourceBlock: Block
+    sourceBlock: Block,
   ): void {
     const block = new Block(scale);
     this.stage.add(block.getMesh());
@@ -212,7 +217,7 @@ export class Game {
           y: block.y - 30,
           z: block.z + dirZ * 10,
         },
-        1000
+        1000,
       )
       .easing(Easing.Quadratic.In)
       .onComplete(() => {
