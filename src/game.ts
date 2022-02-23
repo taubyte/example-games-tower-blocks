@@ -3,12 +3,16 @@ import { Vector3 } from 'three';
 import { Block } from './block';
 import { Stage } from './stage';
 import config from './config.json';
+import { Env, getEnv } from './utils/env';
+import Stats from 'three/examples/jsm/libs/stats.module';
+import { getVersion } from './utils/version';
 
 type GameState = 'loading' | 'ready' | 'playing' | 'ended' | 'resetting';
 
 export class Game {
   private mainContainer: HTMLElement;
   private scoreContainer: HTMLElement;
+  private versionContainer: HTMLElement;
   private instructions: HTMLElement;
 
   private lastTime: number;
@@ -18,13 +22,18 @@ export class Game {
   private stage: Stage;
   private blocks: Block[];
 
+  private stats: Stats;
+
   private colorOffset: number;
 
   public prepare(width: number, height: number): void {
     this.mainContainer = document.getElementById('container');
     this.scoreContainer = document.getElementById('score');
+    this.versionContainer = document.getElementById('version');
     this.instructions = document.getElementById('instructions');
+
     this.scoreContainer.innerHTML = '0';
+    this.versionContainer.innerHTML = `v${getVersion()}`;
 
     this.stage = new Stage();
     this.stage.resize(width, height);
@@ -32,11 +41,17 @@ export class Game {
     this.blocks = [];
     this.addBaseBlock();
 
+    if (getEnv() === Env.DEV) {
+      this.stats = Stats();
+      document.body.appendChild(this.stats.dom);
+    }
+
     this.updateState('ready');
   }
 
   public start(): void {
     this.lastTime = 0;
+    
     this.frame();
   }
 
@@ -59,6 +74,7 @@ export class Game {
 
       this.lastTime = time;
 
+      this.stats?.update();
       this.frame();
     });
   }

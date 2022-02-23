@@ -28,6 +28,13 @@ html, body
 	transform: translatey(-200px) scale(1);
 }
 
+#version
+{
+	position: absolute;
+	right: 5px;
+	bottom: 5px;
+}
+
 #game
 {
 	position: absolute;
