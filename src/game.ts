@@ -1,11 +1,12 @@
 import { Easing, Tween, update as tweenjsUpdate } from '@tweenjs/tween.js';
+import Stats from 'three/examples/jsm/libs/stats.module';
 import { Vector3 } from 'three';
 import { Block } from './block';
 import { Stage } from './stage';
-import config from './config.json';
 import { Env, getEnv } from './utils/env';
-import Stats from 'three/examples/jsm/libs/stats.module';
 import { getVersion } from './utils/version';
+import { Pool } from './utils/pool';
+import config from './config.json';
 
 type GameState = 'loading' | 'ready' | 'playing' | 'ended' | 'resetting';
 
@@ -21,6 +22,8 @@ export class Game {
   private state: GameState = 'loading';
   private stage: Stage;
   private blocks: Block[];
+
+  private pool: Pool<Block>;
 
   private stats: Stats;
 
@@ -44,6 +47,8 @@ export class Game {
 
     this.blocks = [];
     this.addBaseBlock();
+
+    this.pool = new Pool(() => new Block());
 
     if (getEnv() === Env.DEV) {
       this.stats = Stats();
@@ -132,6 +137,7 @@ export class Game {
         .easing(Easing.Cubic.In)
         .onComplete(() => {
           this.stage.remove(this.blocks[i].getMesh());
+          this.pool.release(this.blocks[i]);
         })
         .start();
 
@@ -193,13 +199,24 @@ export class Game {
   }
 
   private addBlock(targetBlock: Block): void {
-    const block = new Block(targetBlock.scale);
+    const block = this.pool.get();
+
+    block.rotation.set(0, 0, 0);
+    block.scale.set(
+      targetBlock.scale.x,
+      targetBlock.scale.y,
+      targetBlock.scale.z,
+    );
+    block.position.set(
+      targetBlock.x,
+      targetBlock.y + targetBlock.height,
+      targetBlock.z,
+    );
+    block.direction.set(0, 0, 0);
+    block.color = this.getNextBlockColor();
+
     this.stage.add(block.getMesh());
     this.blocks.push(block);
-
-    block.color = this.getNextBlockColor();
-    block.position.copy(targetBlock.position);
-    block.y += targetBlock.height;
 
     const length = this.blocks.length;
     if (length % 2 === 0) {
@@ -222,10 +239,14 @@ export class Game {
     scale: Vector3,
     sourceBlock: Block,
   ): void {
-    const block = new Block(scale);
-    this.stage.add(block.getMesh());
+    const block = this.pool.get();
+
+    block.rotation.set(0, 0, 0);
+    block.scale.set(scale.x, scale.y, scale.z);
     block.position.copy(position);
     block.color = sourceBlock.color;
+
+    this.stage.add(block.getMesh());
 
     const dirX = Math.sign(block.x - sourceBlock.x);
     const dirZ = Math.sign(block.z - sourceBlock.z);
@@ -241,11 +262,12 @@ export class Game {
       .easing(Easing.Quadratic.In)
       .onComplete(() => {
         this.stage.remove(block.getMesh());
+        this.pool.release(block);
       })
       .start();
 
     new Tween(block.rotation)
-      .to({ x: dirZ * 5, z: dirX * -5 }, 1000)
+      .to({ x: dirZ * 5, z: dirX * -5 }, 900)
       .delay(50)
       .start();
   }

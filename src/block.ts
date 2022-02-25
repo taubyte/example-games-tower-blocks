@@ -8,10 +8,12 @@ export class Block {
   private mesh: Mesh;
   private material: MeshToonMaterial;
 
-  constructor(scale: Vector3) {
+  constructor(scale: Vector3 = undefined) {
     this.material = new MeshToonMaterial();
     this.mesh = new Mesh(new BoxGeometry(1, 1, 1), this.material);
-    this.mesh.scale.copy(scale);
+    if (scale !== undefined) {
+      this.mesh.scale.copy(scale);
+    }
   }
 
   // prettier-ignore
