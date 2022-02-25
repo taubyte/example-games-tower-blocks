@@ -15,11 +15,11 @@ export class Stage {
   private renderer: WebGLRenderer;
   private camera: OrthographicCamera;
 
-  constructor() {
+  constructor(devicePixelRatio: number) {
     this.container = document.getElementById('game');
     this.scene = new Scene();
 
-    this.setupRenderer();
+    this.setupRenderer(devicePixelRatio);
     this.setupCamera();
     this.setupDirectionalLight();
     this.setupAmbientLight();
@@ -48,11 +48,12 @@ export class Stage {
     this.scene.remove(object);
   }
 
-  private setupRenderer(): void {
+  private setupRenderer(devicePixelRatio: number): void {
     this.renderer = new WebGLRenderer({
       antialias: true,
       alpha: false,
     });
+    this.renderer.setPixelRatio(devicePixelRatio);
     this.renderer.setClearColor(parseInt(config.background.color, 16), 1);
     this.container.appendChild(this.renderer.domElement);
   }

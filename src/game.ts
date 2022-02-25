@@ -26,7 +26,11 @@ export class Game {
 
   private colorOffset: number;
 
-  public prepare(width: number, height: number): void {
+  public prepare(
+    width: number,
+    height: number,
+    devicePixelRatio: number,
+  ): void {
     this.mainContainer = document.getElementById('container');
     this.scoreContainer = document.getElementById('score');
     this.versionContainer = document.getElementById('version');
@@ -35,7 +39,7 @@ export class Game {
     this.scoreContainer.innerHTML = '0';
     this.versionContainer.innerHTML = `v${getVersion()}`;
 
-    this.stage = new Stage();
+    this.stage = new Stage(devicePixelRatio);
     this.stage.resize(width, height);
 
     this.blocks = [];
@@ -51,7 +55,6 @@ export class Game {
 
   public start(): void {
     this.lastTime = 0;
-    
     this.frame();
   }
 

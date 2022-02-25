@@ -23,7 +23,7 @@ function onKeyDown(event: KeyboardEvent): void {
 }
 
 function onLoad(): void {
-  game.prepare(window.innerWidth, window.innerHeight);
+  game.prepare(window.innerWidth, window.innerHeight, window.devicePixelRatio);
   game.start();
 
   window.addEventListener('resize', onResize, false);
