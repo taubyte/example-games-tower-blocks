@@ -61,7 +61,7 @@ html, body
 {
 	transition: opacity 0.5s ease, transform 0.5s ease;
 	opacity: 0;
-	transform: translatey(-50px);
+	transform: translatey(-100px);
 	color: #333344;
 }
 
@@ -138,7 +138,7 @@ html, body
 .ended .game-over *
 {
 	opacity: 1;
-	transform: translatey(0);
+	transform: translatey(-50px);
 }
 
 .ended .game-over p
