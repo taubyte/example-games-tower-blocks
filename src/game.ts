@@ -3,6 +3,7 @@ import Stats from 'three/examples/jsm/libs/stats.module';
 import { Vector3 } from 'three';
 import { Block } from './block';
 import { Stage } from './stage';
+import { Ticker } from './ticker';
 import { Env, getEnv } from './utils/env';
 import { getVersion } from './utils/version';
 import { Pool } from './utils/pool';
@@ -16,8 +17,7 @@ export class Game {
   private versionContainer: HTMLElement;
   private instructions: HTMLElement;
 
-  private lastTime: number;
-  private requestId: number;
+  private ticker: Ticker;
 
   private state: GameState = 'loading';
   private stage: Stage;
@@ -55,36 +55,28 @@ export class Game {
       document.body.appendChild(this.stats.dom);
     }
 
-    this.updateState('ready');
-  }
-
-  public start(): void {
-    this.lastTime = 0;
-    this.frame();
-  }
-
-  public pause(): void {
-    cancelAnimationFrame(this.requestId);
-  }
-
-  public resize(width: number, height: number): void {
-    this.stage.resize(width, height);
-  }
-
-  private frame(): void {
-    this.requestId = requestAnimationFrame((time: number) => {
-      tweenjsUpdate(time);
-
-      const deltaTime = (time - this.lastTime) / 1000;
+    this.ticker = new Ticker((currentTime: number, deltaTime: number) => {
+      tweenjsUpdate(currentTime);
 
       this.update(deltaTime);
       this.render();
 
-      this.lastTime = time;
-
       this.stats?.update();
-      this.frame();
     });
+
+    this.updateState('ready');
+  }
+
+  public start(): void {
+    this.ticker.start();
+  }
+
+  public pause(): void {
+    this.ticker.stop();
+  }
+
+  public resize(width: number, height: number): void {
+    this.stage.resize(width, height);
   }
 
   private update(deltaTime: number): void {
@@ -278,7 +270,7 @@ export class Game {
     const length = this.blocks.length;
     if (length < 2) return;
 
-    const speed = 10 + Math.min(0.05 * length, 5);
+    const speed = 0.16 + Math.min(0.0008 * length, 0.08);
     this.blocks[length - 1].moveScalar(speed * deltaTime);
 
     this.reverseDirection();
