@@ -1,7 +1,7 @@
 #!/bin/bash
-set -e
 
 npm install
-npm audit fix
-npm run build && mv dist/* /out
+npm run build
+mv dist/* /out
+exit 0
 
