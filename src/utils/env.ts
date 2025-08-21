@@ -3,9 +3,7 @@ export enum Env {
   PROD = 'production',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-declare const __ENV__: Env;
-
 export function getEnv(): Env {
-  return __ENV__ ?? Env.PROD;
+  // Use Vite's environment variable system
+  return import.meta.env.MODE === 'development' ? Env.DEV : Env.PROD;
 }

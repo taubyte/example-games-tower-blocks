@@ -1,6 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/naming-convention
-declare const __VERSION__: string;
+// Version constant - can be updated manually or through build process
+const VERSION = '0.0.0';
 
 export function getVersion(): string {
-  return __VERSION__ ?? '0.0.0';
+  return VERSION;
 }

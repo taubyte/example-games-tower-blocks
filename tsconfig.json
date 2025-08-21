@@ -9,6 +9,9 @@
     "target": "ESNext",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true
   },
   "include": [
     "./src/**/*.ts"
