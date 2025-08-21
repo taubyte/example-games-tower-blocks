@@ -1,4 +1,7 @@
 #!/bin/bash
+set -e
 
-npm install 
-npm run dev
+npm install
+npm audit fix
+npm run build && mv dist/* /out
+
