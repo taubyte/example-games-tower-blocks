@@ -1,6 +1,6 @@
 version: 1.00
-environment:
-  image: node:16.18.0-alpine
+enviroment:
+  image: node:18.14.1-bullseye
   variables:
 workflow:
   - build
