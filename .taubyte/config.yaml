@@ -1,5 +1,5 @@
 version: 1.00
-enviroment:
+environment:
   image: node:18.14.1-bullseye
   variables:
 workflow:
