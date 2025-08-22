@@ -1,45 +1,48 @@
-import { Easing, Tween, update as tweenjsUpdate } from '@tweenjs/tween.js';
-import Stats from 'three/examples/jsm/libs/stats.module';
-import { Vector3 } from 'three';
-import { Block } from './block';
-import { Stage } from './stage';
-import { Ticker } from './ticker';
-import { Env, getEnv } from './utils/env';
-import { getVersion } from './utils/version';
-import { Pool } from './utils/pool';
-import config from './config.json';
+import { Easing, Tween, update as tweenjsUpdate } from "@tweenjs/tween.js";
+import Stats from "three/examples/jsm/libs/stats.module";
+import { Vector3 } from "three";
+import { Block } from "./block";
+import { Stage } from "./stage";
+import { Ticker } from "./ticker";
+import { Env, getEnv } from "./utils/env";
+import { getVersion } from "./utils/version";
+import { Pool } from "./utils/pool";
+import config from "./config.json";
 
-type GameState = 'loading' | 'ready' | 'playing' | 'ended' | 'resetting';
+type GameState = "loading" | "ready" | "playing" | "ended" | "resetting";
 
 export class Game {
-  private mainContainer: HTMLElement;
-  private scoreContainer: HTMLElement;
-  private versionContainer: HTMLElement;
-  private instructions: HTMLElement;
+  private mainContainer!: HTMLElement;
+  private scoreContainer!: HTMLElement;
+  private versionContainer!: HTMLElement;
+  private instructions!: HTMLElement;
 
-  private ticker: Ticker;
+  private ticker!: Ticker;
 
-  private state: GameState = 'loading';
-  private stage: Stage;
-  private blocks: Block[];
+  private state: GameState = "loading";
+  private stage!: Stage;
+  private blocks!: Block[];
 
-  private pool: Pool<Block>;
+  private pool!: Pool<Block>;
 
-  private stats: Stats;
+  private stats!: Stats;
 
-  private colorOffset: number;
+  private colorOffset!: number;
+
+  // Add callback for game over
+  private onGameOver: ((score: number) => void) | null = null;
 
   public prepare(
     width: number,
     height: number,
-    devicePixelRatio: number,
+    devicePixelRatio: number
   ): void {
-    this.mainContainer = document.getElementById('container');
-    this.scoreContainer = document.getElementById('score');
-    this.versionContainer = document.getElementById('version');
-    this.instructions = document.getElementById('instructions');
+    this.mainContainer = document.getElementById("container")!;
+    this.scoreContainer = document.getElementById("score")!;
+    this.versionContainer = document.getElementById("version")!;
+    this.instructions = document.getElementById("instructions")!;
 
-    this.scoreContainer.innerHTML = '0';
+    this.scoreContainer.innerHTML = "0";
     this.versionContainer.innerHTML = `v${getVersion()}`;
 
     this.stage = new Stage(devicePixelRatio);
@@ -51,7 +54,7 @@ export class Game {
     this.pool = new Pool(() => new Block());
 
     if (getEnv() === Env.DEV) {
-      this.stats = Stats();
+      this.stats = new Stats();
       document.body.appendChild(this.stats.dom);
     }
 
@@ -64,11 +67,13 @@ export class Game {
       this.stats?.update();
     });
 
-    this.updateState('ready');
+    this.updateState("ready");
   }
 
   public start(): void {
     this.ticker.start();
+    // Start the game immediately when called from modal
+    this.startGame();
   }
 
   public pause(): void {
@@ -77,6 +82,21 @@ export class Game {
 
   public resize(width: number, height: number): void {
     this.stage.resize(width, height);
+  }
+
+  // Add method to check if game is playing
+  public isPlaying(): boolean {
+    return this.state === "playing";
+  }
+
+  // Add method to restart the game
+  public restart(): void {
+    this.restartGame();
+  }
+
+  // Add method to set game over callback
+  public setGameOverCallback(callback: (score: number) => void): void {
+    this.onGameOver = callback;
   }
 
   private update(deltaTime: number): void {
@@ -95,28 +115,28 @@ export class Game {
 
   public action(): void {
     switch (this.state) {
-      case 'ready':
+      case "ready":
         this.startGame();
         break;
-      case 'playing':
+      case "playing":
         this.placeBlock();
         break;
-      case 'ended':
+      case "ended":
         this.restartGame();
         break;
     }
   }
 
   private startGame(): void {
-    if (this.state === 'playing') return;
+    if (this.state === "playing") return;
     this.colorOffset = Math.round(Math.random() * 100);
-    this.scoreContainer.innerHTML = '0';
-    this.updateState('playing');
+    this.scoreContainer.innerHTML = "0";
+    this.updateState("playing");
     this.addBlock(this.blocks[0]);
   }
 
   private restartGame(): void {
-    this.updateState('resetting');
+    this.updateState("resetting");
 
     const length = this.blocks.length;
     const duration = 200;
@@ -158,7 +178,15 @@ export class Game {
   }
 
   private endGame(): void {
-    this.updateState('ended');
+    this.updateState("ended");
+
+    // Get the final score (number of blocks - 1 for the base block)
+    const finalScore = this.blocks.length - 1;
+
+    // Call the game over callback if set
+    if (this.onGameOver) {
+      this.onGameOver(finalScore);
+    }
   }
 
   private placeBlock(): void {
@@ -168,7 +196,7 @@ export class Game {
 
     const result = currentBlock.cut(targetBlock, config.gameplay.accuracy);
 
-    if (result.state === 'missed') {
+    if (result.state === "missed") {
       this.stage.remove(currentBlock.getMesh());
       this.endGame();
       return;
@@ -177,7 +205,7 @@ export class Game {
     this.scoreContainer.innerHTML = String(length - 1);
     this.addBlock(currentBlock);
 
-    if (result.state === 'chopped') {
+    if (result.state === "chopped" && result.position && result.scale) {
       this.addChoppedBlock(result.position, result.scale, currentBlock);
     }
   }
@@ -197,12 +225,12 @@ export class Game {
     block.scale.set(
       targetBlock.scale.x,
       targetBlock.scale.y,
-      targetBlock.scale.z,
+      targetBlock.scale.z
     );
     block.position.set(
       targetBlock.x,
       targetBlock.y + targetBlock.height,
-      targetBlock.z,
+      targetBlock.z
     );
     block.direction.set(0, 0, 0);
     block.color = this.getNextBlockColor();
@@ -222,14 +250,14 @@ export class Game {
 
     this.scoreContainer.innerHTML = String(length - 1);
     if (length >= config.instructions.height) {
-      this.instructions.classList.add('hide');
+      this.instructions.classList.add("hide");
     }
   }
 
   private addChoppedBlock(
     position: Vector3,
     scale: Vector3,
-    sourceBlock: Block,
+    sourceBlock: Block
   ): void {
     const block = this.pool.get();
 
@@ -249,7 +277,7 @@ export class Game {
           y: block.y - 30,
           z: block.z + dirZ * 10,
         },
-        1000,
+        1000
       )
       .easing(Easing.Quadratic.In)
       .onComplete(() => {
@@ -265,7 +293,7 @@ export class Game {
   }
 
   private moveCurrentBlock(deltaTime: number): void {
-    if (this.state !== 'playing') return;
+    if (this.state !== "playing") return;
 
     const length = this.blocks.length;
     if (length < 2) return;
