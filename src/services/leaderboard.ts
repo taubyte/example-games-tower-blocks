@@ -9,7 +9,7 @@ export interface GlobalScore {
 export type LeaderboardResponse = GlobalScore[];
 
 class LeaderboardService {
-  private readonly baseUrl = "http://yzorlmue1.g.k8s.cyou/api";
+  private readonly baseUrl = "https://yzorlmue1.g.k8s.cyou/api";
   private readonly maxScoreThreshold = 10000; // Anti-cheat: reasonable max score
   private readonly minScoreThreshold = 0; // Anti-cheat: minimum valid score
   private readonly maxNameLength = 20; // Anti-cheat: reasonable name length
