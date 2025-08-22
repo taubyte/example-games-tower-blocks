@@ -8,6 +8,9 @@ import { Env, getEnv } from "./utils/env";
 import { getVersion } from "./utils/version";
 import { Pool } from "./utils/pool";
 import config from "./config.json";
+import { audioManager } from "./audio";
+import { particleSystem } from "./particles";
+import { achievementSystem } from "./achievements";
 
 type GameState = "loading" | "ready" | "playing" | "ended" | "resetting";
 
@@ -31,6 +34,14 @@ export class Game {
 
   // Add callback for game over
   private onGameOver: ((score: number) => void) | null = null;
+
+  // Game statistics for achievements
+  private gameStats = {
+    totalBlocks: 0,
+    perfectPlaces: 0,
+    consecutivePerfect: 0,
+    gameStartTime: 0,
+  };
 
   public prepare(
     width: number,
@@ -101,6 +112,9 @@ export class Game {
 
   private update(deltaTime: number): void {
     this.moveCurrentBlock(deltaTime);
+
+    // Update particle system
+    particleSystem.update(deltaTime);
   }
 
   private render(): void {
@@ -133,6 +147,23 @@ export class Game {
     this.scoreContainer.innerHTML = "0";
     this.updateState("playing");
     this.addBlock(this.blocks[0]);
+
+    // Reset game stats and start tracking
+    this.gameStats = {
+      totalBlocks: 0,
+      perfectPlaces: 0,
+      consecutivePerfect: 0,
+      gameStartTime: Date.now(),
+    };
+
+    // Play game start sound
+    audioManager.playSound("gameStart");
+
+    // Start background music
+    audioManager.startBackgroundMusic();
+
+    // Update difficulty indicator
+    this.updateDifficultyIndicator();
   }
 
   private restartGame(): void {
@@ -183,6 +214,29 @@ export class Game {
     // Get the final score (number of blocks - 1 for the base block)
     const finalScore = this.blocks.length - 1;
 
+    // Play game over sound
+    audioManager.playSound("gameOver");
+
+    // Stop background music
+    audioManager.stopBackgroundMusic();
+
+    // Update achievements
+    const gameTime = Date.now() - this.gameStats.gameStartTime;
+    achievementSystem.updateStats({
+      totalBlocks: this.gameStats.totalBlocks,
+      perfectPlaces: this.gameStats.perfectPlaces,
+      highestScore: Math.max(
+        finalScore,
+        achievementSystem.getAchievements().find((a) => a.id === "tower_10")
+          ?.unlocked
+          ? 0
+          : 0
+      ),
+      gamesPlayed: 1, // Increment games played
+      totalPlayTime: gameTime,
+      consecutivePerfect: this.gameStats.consecutivePerfect,
+    });
+
     // Call the game over callback if set
     if (this.onGameOver) {
       this.onGameOver(finalScore);
@@ -198,8 +252,35 @@ export class Game {
 
     if (result.state === "missed") {
       this.stage.remove(currentBlock.getMesh());
+      audioManager.playSound("blockMiss");
       this.endGame();
       return;
+    }
+
+    // Update game stats
+    this.gameStats.totalBlocks++;
+
+    // Handle perfect placement
+    if (result.state === "perfect") {
+      this.gameStats.perfectPlaces++;
+      this.gameStats.consecutivePerfect++;
+      audioManager.playSound("perfect");
+
+      // Create sparkle effect for perfect placement
+      particleSystem.createSparkle(currentBlock.position, currentBlock.color);
+
+      // Show perfect score popup
+      this.showScorePopup("Perfect!", "#FFD700");
+    } else {
+      this.gameStats.consecutivePerfect = 0;
+      audioManager.playSound("blockPlace");
+
+      // Create explosion effect for regular placement
+      particleSystem.createExplosion(
+        currentBlock.position,
+        currentBlock.color,
+        4
+      );
     }
 
     this.scoreContainer.innerHTML = String(length - 1);
@@ -208,6 +289,9 @@ export class Game {
     if (result.state === "chopped" && result.position && result.scale) {
       this.addChoppedBlock(result.position, result.scale, currentBlock);
     }
+
+    // Update difficulty indicator
+    this.updateDifficultyIndicator();
   }
 
   private addBaseBlock(): void {
@@ -339,5 +423,41 @@ export class Game {
     const g = base.g + range.g * Math.sin(intesity.g * offset);
     const b = base.b + range.b * Math.sin(intesity.b * offset);
     return (r << 16) + (g << 8) + b;
+  }
+
+  // Show score popup animation
+  private showScorePopup(text: string, color: string): void {
+    const popup = document.createElement("div");
+    popup.className = "score-multiplier";
+    popup.textContent = text;
+    popup.style.color = color;
+
+    document.body.appendChild(popup);
+
+    // Remove after animation
+    setTimeout(() => {
+      if (popup.parentNode) {
+        popup.parentNode.removeChild(popup);
+      }
+    }, 500);
+  }
+
+  // Update difficulty indicator based on current score
+  private updateDifficultyIndicator(): void {
+    const score = this.blocks.length - 1;
+    const indicator = document.getElementById("difficulty-indicator");
+
+    if (!indicator) return;
+
+    if (score < 10) {
+      indicator.textContent = "Easy";
+      indicator.className = "difficulty-indicator difficulty-easy";
+    } else if (score < 30) {
+      indicator.textContent = "Medium";
+      indicator.className = "difficulty-indicator difficulty-medium";
+    } else {
+      indicator.textContent = "Hard";
+      indicator.className = "difficulty-indicator difficulty-hard";
+    }
   }
 }

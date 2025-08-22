@@ -74,7 +74,7 @@ export class GlobalLeaderboard {
     this.container.innerHTML = `
       <div class="leaderboard-header">
         <h3>🌍 Global Leaderboard</h3>
-        <div class="leaderboard-subtitle">Top 10 Players</div>
+        <div class="leaderboard-subtitle">Top 10 Players (Last 5 Min)</div>
       </div>
       <div class="leaderboard-content">
         ${

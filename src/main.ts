@@ -1,6 +1,9 @@
 import { Game } from "./game";
 import { ModalManager } from "./modal";
 import { GlobalLeaderboard } from "./globalLeaderboard";
+import { audioManager } from "./audio";
+import { particleSystem } from "./particles";
+import { achievementSystem } from "./achievements";
 
 // Initialize modal manager, game, and global leaderboard
 const modalManager = new ModalManager();
@@ -74,11 +77,24 @@ function onLoad(): void {
   window.addEventListener("mousedown", onMouseDown, false);
   window.addEventListener("keydown", onKeyDown, false);
 
-  // Debug: Test global leaderboard after a short delay
-  setTimeout(async () => {
-    console.log("Testing global leaderboard...");
-    await globalLeaderboard.show();
-  }, 2000);
+  // Initialize global leaderboard (hidden until game starts)
+
+  // Set up audio controls
+  const audioToggle = document.getElementById(
+    "audio-toggle"
+  ) as HTMLButtonElement;
+  if (audioToggle) {
+    audioToggle.addEventListener("click", () => {
+      audioManager.toggleMute();
+      audioToggle.textContent = audioManager.getMuted() ? "🔇" : "🔊";
+      audioToggle.classList.toggle("muted", audioManager.getMuted());
+
+      // If unmuting and game is playing, restart background music
+      if (!audioManager.getMuted() && game.isPlaying()) {
+        audioManager.startBackgroundMusic();
+      }
+    });
+  }
 }
 
 window.addEventListener("load", onLoad, false);
