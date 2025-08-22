@@ -1,9 +1,11 @@
 import { Game } from "./game";
 import { ModalManager } from "./modal";
+import { GlobalLeaderboard } from "./globalLeaderboard";
 
-// Initialize modal manager and game
+// Initialize modal manager, game, and global leaderboard
 const modalManager = new ModalManager();
 const game = new Game();
+const globalLeaderboard = new GlobalLeaderboard();
 
 function onResize(): void {
   game.resize(window.innerWidth, window.innerHeight);
@@ -42,17 +44,27 @@ function onLoad(): void {
   modalManager.setStartGameCallback(() => {
     // Start the game when start button is pressed
     game.start();
+    // Show global leaderboard when game starts
+    globalLeaderboard.show();
   });
 
   modalManager.setPlayAgainCallback(() => {
     // Restart the game when play again is pressed
     game.restart();
+    // Show global leaderboard when game restarts
+    globalLeaderboard.show();
   });
 
   // Set up game over callback
-  game.setGameOverCallback((score: number) => {
+  game.setGameOverCallback(async (score: number) => {
     // Show game over modal with final score
     modalManager.showGameOver(score);
+
+    // Submit score to global leaderboard
+    const playerName = modalManager.getCurrentPlayerName();
+    if (playerName) {
+      await globalLeaderboard.submitScore(playerName, score);
+    }
   });
 
   // Set up game event listeners
@@ -61,6 +73,12 @@ function onLoad(): void {
   window.addEventListener("touchstart", onTouchStart, { passive: false });
   window.addEventListener("mousedown", onMouseDown, false);
   window.addEventListener("keydown", onKeyDown, false);
+
+  // Debug: Test global leaderboard after a short delay
+  setTimeout(async () => {
+    console.log("Testing global leaderboard...");
+    await globalLeaderboard.show();
+  }, 2000);
 }
 
 window.addEventListener("load", onLoad, false);

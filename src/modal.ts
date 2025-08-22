@@ -111,6 +111,8 @@ export class ModalManager {
     this.gameOverSection.classList.add("hidden");
     this.modal.style.display = "flex";
     this.playerNameInput.focus();
+    // Hide global leaderboard when modal appears
+    this.hideGlobalLeaderboard();
   }
 
   private showStartGame(): void {
@@ -118,6 +120,8 @@ export class ModalManager {
     this.startGameSection.classList.remove("hidden");
     this.gameOverSection.classList.add("hidden");
     this.updateScoresList();
+    // Hide global leaderboard when modal appears
+    this.hideGlobalLeaderboard();
   }
 
   public showGameOver(finalScore: number): void {
@@ -133,6 +137,9 @@ export class ModalManager {
     // Update both score lists to show the latest scores
     this.updateScoresList();
     this.updateGameOverScoresList();
+
+    // Hide global leaderboard when modal appears
+    this.hideGlobalLeaderboard();
   }
 
   private hideModal(): void {
@@ -145,6 +152,19 @@ export class ModalManager {
 
   public setPlayAgainCallback(callback: () => void): void {
     this.onPlayAgain = callback;
+  }
+
+  // Get current player name
+  public getCurrentPlayerName(): string {
+    return this.currentPlayerName;
+  }
+
+  // Hide global leaderboard when modal is shown
+  private hideGlobalLeaderboard(): void {
+    const globalLeaderboard = document.getElementById("global-leaderboard");
+    if (globalLeaderboard) {
+      globalLeaderboard.style.display = "none";
+    }
   }
 
   private saveScore(score: number): void {
