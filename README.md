@@ -39,7 +39,7 @@ The app can call a backend for leaderboard endpoints. Base URL is optional:
 Create `.env` (optional) and set:
 
 ```env
-APP_API_BASE_URL=http://localhost:14005/api
+APP_API_BASE_URL=<URL>
 ```
 
 See `src/utils/api.ts` for the fallback implementation.
