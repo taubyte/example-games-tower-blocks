@@ -4,7 +4,6 @@ import { Vector3 } from "three";
 import { Block } from "./block";
 import { Stage } from "./stage";
 import { Ticker } from "./ticker";
-import { Env, getEnv } from "./utils/env";
 import { getVersion } from "./utils/version";
 import { Pool } from "./utils/pool";
 import config from "./config.json";

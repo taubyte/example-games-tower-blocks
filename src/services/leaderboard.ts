@@ -26,7 +26,7 @@ export interface GameEvent {
 // The API returns an array directly, not an object with scores property
 export type LeaderboardResponse = GlobalScore[];
 
-import { getApiBaseUrl } from "../utils/env";
+import { getApiBaseUrl } from "../utils/api";
 
 class LeaderboardService {
   private readonly baseUrl = getApiBaseUrl();
@@ -35,7 +35,7 @@ class LeaderboardService {
   // Get global leaderboard (top 10 all-time)
   async getGlobalLeaderboard(): Promise<GlobalScore[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/leaderboard`);
+      const response = await fetch(`${this.baseUrl}/api/leaderboard`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data: LeaderboardResponse = await response.json();
       return data
@@ -51,7 +51,9 @@ class LeaderboardService {
   async getPlayerScore(playerName: string): Promise<GlobalScore | null> {
     try {
       const response = await fetch(
-        `${this.baseUrl}/score?player_name=${encodeURIComponent(playerName)}`
+        `${this.baseUrl}/api/score?player_name=${encodeURIComponent(
+          playerName
+        )}`
       );
       if (!response.ok) return null;
       return await response.json();
@@ -65,7 +67,7 @@ class LeaderboardService {
   async submitScoreFromState(gameState: GameStateData): Promise<boolean> {
     if (!this.validateGameState(gameState)) return false;
     try {
-      const response = await fetch(`${this.baseUrl}/score`, {
+      const response = await fetch(`${this.baseUrl}/api/score`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(gameState),
