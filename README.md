@@ -1,51 +1,101 @@
-# Tower Blocks (Refactored)   
+## Tower Blocks
 
-## Quick Start
+A small browser game where you stack moving blocks as high as possible. This repository contains the Vite + TypeScript front‑end, with optional integration to a simple leaderboard API.
 
-1. Install dependencies:
+### Features
 
-```
+- **Simple, addictive gameplay**: click/space to place the block, stack higher to score more
+- **Difficulty indicator** and on‑screen score
+- **Sound toggle**
+- **Local and global leaderboard integration** (optional backend)
+
+## Getting Started
+
+1. Install dependencies
+
+```bash
 npm install
 ```
 
-2. Configure environment:
-   - Create a `.env` file at project root and set :
+2. Run the dev server
 
-```
-APP_API_BASE_URL=http://yzorlmue0.blackhole.localtau:14005/api
-```
-
-- For local use, point to your local API, e.g. `http://localhost:14005/api`.
-  Backward compatible: `VITE_API_BASE_URL` also works if already used.
-
-3. Run the dev server:
-
-```
+```bash
 npm run dev
 ```
 
-## Required Backend Endpoints
+> Requires Node 18+. See the `engines` field in `package.json`.
 
-The frontend expects the following endpoints (paths are fixed):
+3. Open the app
+
+The dev server will open automatically (default `http://localhost:3000`).
+
+## Configuration
+
+The app can call a backend for leaderboard endpoints. Base URL is optional:
+
+- If `APP_API_BASE_URL` it will be used.
+- If not set, the app falls back to `window.location.origin` (same‑origin).
+
+Create `.env` (optional) and set:
+
+```env
+APP_API_BASE_URL=http://localhost:14005/api
+```
+
+See `src/utils/api.ts` for the fallback implementation.
+
+## Scripts
+
+- `npm run dev`: Start Vite dev server
+- `npm run build`: Production build
+- `npm run preview`: Preview the build locally
+
+## Project Structure
+
+```
+example-games-tower-blocks-fork/
+  index.html
+  style.css
+  assets/
+    favicon.svg
+  src/
+    main.ts
+    game.ts
+    stage.ts
+    block.ts
+    audio.ts
+    achievements.ts
+    globalLeaderboard.ts
+    services/
+      leaderboard.ts
+    utils/
+      api.ts
+      env.ts
+      pool.ts
+      version.ts
+```
+
+## Backend API
+
+The frontend expects these endpoints (paths are fixed):
 
 - GET `/api/leaderboard`
 
-  - Returns JSON array of: `{ player_name: string, highest_score: string }`.
+  - Returns a JSON array of `{ player_name: string, highest_score: string }`
 
 - GET `/api/score?player_name=NAME`
 
-  - Returns one player's score as JSON or 404 when not found.
+  - Returns one player's score as JSON (or 404 if not found)
 
 - POST `/api/score`
+  - Body: full game state JSON used by the server to compute/store score, e.g.:
 
-  - Body: full game state JSON:
-
-```
+```json
 {
   "player_name": "amine",
   "game_events": [
     {
-      "event_type": "block_placed" | "block_chopped" | "perfect_placement" | "missed",
+      "event_type": "block_placed",
       "block_index": 3,
       "block_position": { "x": 0, "y": 3, "z": 0 },
       "block_scale": { "x": 3, "y": 1, "z": 3 },
@@ -59,25 +109,16 @@ The frontend expects the following endpoints (paths are fixed):
 }
 ```
 
-- Server computes the score from the JSON and stores it in `/leaderboard`.
+If you use Taubyte or another serverless platform, store scores in a simple key/value database keyed by `player_name` (collection `/leaderboard`).
 
-## Database (suggested if using Taubyte)
+## Deployment
 
-- Create one database (no predefined fields/schemas):
-  - `/leaderboard`
+- Ensure CORS allows your frontend origin
+- Rebuild after changing `APP_API_BASE_URL`/`VITE_API_BASE_URL`
+- Serve the built `dist/` directory from any static host
 
-Implementation details are handled by the serverless function; it uses `player_name` as the key and stores the computed score as the value. No fields need to be defined on creation.
+## Troubleshooting
 
-## Environment Variables
-
-- `APP_API_BASE_URL` (preferred) or `VITE_API_BASE_URL`: Base URL for the backend API (no trailing slash). Example: `http://localhost:14005/api`.
-
-## Deployment Notes
-
-- Ensure CORS allows your frontend origin.
-- Rebuild after changing `APP_API_BASE_URL` or `VITE_API_BASE_URL`.
-- Keep endpoints and JSON shapes exactly as above for compatibility.
-
-## Serverless Functions
-
-The backend/serverless code referenced by this README lives in the `serverless-functions` branch of this repository. Switch to that branch to view and deploy the HTTP handlers for `/api/leaderboard` and `/api/score`.
+- Blank page or 404s to API: verify `APP_API_BASE_URL` or use same‑origin backend
+- Mixed content errors: ensure the API is HTTPS when the site is served via HTTPS
+- Dev server doesn’t open: visit `http://localhost:3000` manually
