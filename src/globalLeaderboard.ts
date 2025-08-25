@@ -1,5 +1,9 @@
 // Global leaderboard component for game scene
-import { leaderboardService, GlobalScore } from "./services/leaderboard";
+import {
+  leaderboardService,
+  GlobalScore,
+  GameStateData,
+} from "./services/leaderboard";
 
 export class GlobalLeaderboard {
   private container!: HTMLElement;
@@ -33,6 +37,8 @@ export class GlobalLeaderboard {
     this.isVisible = true;
     this.container.style.display = "block";
     console.log("Leaderboard container display:", this.container.style.display);
+    console.log("Leaderboard container:", this.container);
+    console.log("Leaderboard container parent:", this.container.parentElement);
     await this.refreshScores();
   }
 
@@ -44,8 +50,16 @@ export class GlobalLeaderboard {
   public async refreshScores(): Promise<void> {
     try {
       console.log("Fetching global leaderboard...");
-      this.scores = await leaderboardService.getGlobalLeaderboard();
-      console.log("Global leaderboard scores:", this.scores);
+      const fetched = await leaderboardService.getGlobalLeaderboard();
+      // Ensure numeric descending order regardless of API order
+      this.scores = fetched
+        .slice()
+        .sort(
+          (a, b) =>
+            (parseInt(b.highest_score as unknown as string, 10) || 0) -
+            (parseInt(a.highest_score as unknown as string, 10) || 0)
+        );
+      console.log("Global leaderboard scores (sorted):", this.scores);
       this.renderScores();
     } catch (error) {
       console.error("Failed to refresh global leaderboard:", error);
@@ -61,20 +75,21 @@ export class GlobalLeaderboard {
     );
     if (!this.isVisible) return;
 
-    // Add some test data if no scores are available (for debugging)
-    const scoresToShow =
-      this.scores.length === 0
-        ? [
-            { player_name: "Test Player 1", highest_score: "100" },
-            { player_name: "Test Player 2", highest_score: "85" },
-            { player_name: "Test Player 3", highest_score: "72" },
-          ]
-        : this.scores;
+    // Use scores sorted numerically (defensive)
+    const scoresToShow = this.scores
+      .slice()
+      .sort(
+        (a, b) =>
+          (parseInt(b.highest_score as unknown as string, 10) || 0) -
+          (parseInt(a.highest_score as unknown as string, 10) || 0)
+      );
 
     this.container.innerHTML = `
       <div class="leaderboard-header">
         <h3>🌍 Global Leaderboard</h3>
-        <div class="leaderboard-subtitle">Top 10 Players (Last 5 Min)</div>
+        <div class="leaderboard-subtitle">${
+          scoresToShow.length === 0 ? "No Scores Yet" : "Top 10 All-Time"
+        }</div>
       </div>
       <div class="leaderboard-content">
         ${
@@ -137,16 +152,12 @@ export class GlobalLeaderboard {
     }
   }
 
-  // Method to submit a new score
-  public async submitScore(
-    playerName: string,
-    score: number
+  // Method to submit a score by sending full game state to backend
+  public async submitScoreFromState(
+    gameState: GameStateData
   ): Promise<boolean> {
-    const success = await leaderboardService.submitScore(playerName, score);
-    if (success) {
-      // Refresh the leaderboard after successful submission
-      await this.refreshScores();
-    }
-    return success;
+    const ok = await leaderboardService.submitScoreFromState(gameState);
+    if (ok) await this.refreshScores();
+    return ok;
   }
 }

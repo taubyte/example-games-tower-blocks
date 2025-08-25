@@ -1,5 +1,5 @@
 import { Easing, Tween, update as tweenjsUpdate } from "@tweenjs/tween.js";
-import Stats from "three/examples/jsm/libs/stats.module";
+
 import { Vector3 } from "three";
 import { Block } from "./block";
 import { Stage } from "./stage";
@@ -11,6 +11,7 @@ import config from "./config.json";
 import { audioManager } from "./audio";
 import { particleSystem } from "./particles";
 import { achievementSystem } from "./achievements";
+import { GameEvent, GameStateData } from "./services/leaderboard";
 
 type GameState = "loading" | "ready" | "playing" | "ended" | "resetting";
 
@@ -28,12 +29,12 @@ export class Game {
 
   private pool!: Pool<Block>;
 
-  private stats!: Stats;
-
   private colorOffset!: number;
 
   // Add callback for game over
-  private onGameOver: ((score: number) => void) | null = null;
+  private onGameOver:
+    | ((score: number, gameState?: GameStateData) => void)
+    | null = null;
 
   // Game statistics for achievements
   private gameStats = {
@@ -42,6 +43,9 @@ export class Game {
     consecutivePerfect: 0,
     gameStartTime: 0,
   };
+
+  // Game events for anti-cheat validation
+  private gameEvents: GameEvent[] = [];
 
   public prepare(
     width: number,
@@ -64,18 +68,11 @@ export class Game {
 
     this.pool = new Pool(() => new Block());
 
-    if (getEnv() === Env.DEV) {
-      this.stats = new Stats();
-      document.body.appendChild(this.stats.dom);
-    }
-
     this.ticker = new Ticker((currentTime: number, deltaTime: number) => {
       tweenjsUpdate(currentTime);
 
       this.update(deltaTime);
       this.render();
-
-      this.stats?.update();
     });
 
     this.updateState("ready");
@@ -155,6 +152,9 @@ export class Game {
       consecutivePerfect: 0,
       gameStartTime: Date.now(),
     };
+
+    // Reset game events
+    this.gameEvents = [];
 
     // Play game start sound
     audioManager.playSound("gameStart");
@@ -237,9 +237,17 @@ export class Game {
       consecutivePerfect: this.gameStats.consecutivePerfect,
     });
 
+    // Create game state data for anti-cheat validation
+    const gameState: GameStateData = {
+      player_name: "", // Will be set by the callback
+      game_events: this.gameEvents,
+      game_duration: Date.now() - this.gameStats.gameStartTime,
+      final_block_count: this.blocks.length,
+    };
+
     // Call the game over callback if set
     if (this.onGameOver) {
-      this.onGameOver(finalScore);
+      this.onGameOver(finalScore, gameState);
     }
   }
 
@@ -249,6 +257,40 @@ export class Game {
     const currentBlock = this.blocks[length - 1];
 
     const result = currentBlock.cut(targetBlock, config.gameplay.accuracy);
+
+    // Track game event
+    const eventTime = Date.now() - this.gameStats.gameStartTime;
+    const gameEvent: GameEvent = {
+      event_type:
+        result.state === "missed"
+          ? "missed"
+          : result.state === "perfect"
+          ? "perfect_placement"
+          : "block_chopped",
+      block_index: this.blocks.length - 1,
+      block_position: {
+        x: currentBlock.x,
+        y: currentBlock.y,
+        z: currentBlock.z,
+      },
+      block_scale: {
+        x: currentBlock.scale.x,
+        y: currentBlock.scale.y,
+        z: currentBlock.scale.z,
+      },
+      target_position: {
+        x: targetBlock.x,
+        y: targetBlock.y,
+        z: targetBlock.z,
+      },
+      target_scale: {
+        x: targetBlock.scale.x,
+        y: targetBlock.scale.y,
+        z: targetBlock.scale.z,
+      },
+      timestamp: eventTime,
+    };
+    this.gameEvents.push(gameEvent);
 
     if (result.state === "missed") {
       this.stage.remove(currentBlock.getMesh());

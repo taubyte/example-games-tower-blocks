@@ -58,15 +58,13 @@ function onLoad(): void {
     globalLeaderboard.show();
   });
 
-  // Set up game over callback
-  game.setGameOverCallback(async (score: number) => {
-    // Show game over modal with final score
+  // Set up game over callback to send full game state to backend
+  game.setGameOverCallback(async (score: number, gameState?: any) => {
     modalManager.showGameOver(score);
-
-    // Submit score to global leaderboard
     const playerName = modalManager.getCurrentPlayerName();
-    if (playerName) {
-      await globalLeaderboard.submitScore(playerName, score);
+    if (playerName && gameState) {
+      gameState.player_name = playerName;
+      await globalLeaderboard.submitScoreFromState(gameState);
     }
   });
 

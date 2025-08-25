@@ -44,6 +44,13 @@ export class ModalManager {
       "scores-list-game-over"
     ) as HTMLElement;
 
+    // Ensure input is cleared and unlocked on load to avoid stale autofill
+    this.playerNameInput.value = "";
+    this.playerNameInput.autocomplete = "off";
+    this.playerNameInput.spellcheck = false;
+    this.playerNameInput.readOnly = false;
+    this.playerNameInput.disabled = false;
+
     // Set up event listeners
     this.setupEventListeners();
 
@@ -110,6 +117,15 @@ export class ModalManager {
     this.startGameSection.classList.add("hidden");
     this.gameOverSection.classList.add("hidden");
     this.modal.style.display = "flex";
+
+    // Reset current name and clear/unlock the input each time the modal opens
+    this.currentPlayerName = "";
+    this.playerNameInput.value = "";
+    this.playerNameInput.readOnly = false;
+    this.playerNameInput.disabled = false;
+    this.playerNameInput.autocomplete = "off";
+    this.playerNameInput.spellcheck = false;
+
     this.playerNameInput.focus();
     // Hide global leaderboard when modal appears
     this.hideGlobalLeaderboard();

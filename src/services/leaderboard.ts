@@ -5,46 +5,42 @@ export interface GlobalScore {
   timestamp?: number; // Add timestamp for filtering
 }
 
+// Game state data for anti-cheat validation
+export interface GameStateData {
+  player_name: string;
+  game_events: GameEvent[];
+  game_duration: number; // in milliseconds
+  final_block_count: number;
+}
+
+export interface GameEvent {
+  event_type: "block_placed" | "block_chopped" | "perfect_placement" | "missed";
+  block_index: number;
+  block_position: { x: number; y: number; z: number };
+  block_scale: { x: number; y: number; z: number };
+  target_position: { x: number; y: number; z: number };
+  target_scale: { x: number; y: number; z: number };
+  timestamp: number; // relative to game start
+}
+
 // The API returns an array directly, not an object with scores property
 export type LeaderboardResponse = GlobalScore[];
 
-class LeaderboardService {
-  private readonly baseUrl = "https://yzorlmue1.g.k8s.cyou/api";
-  private readonly maxScoreThreshold = 10000; // Anti-cheat: reasonable max score
-  private readonly minScoreThreshold = 0; // Anti-cheat: minimum valid score
-  private readonly maxNameLength = 20; // Anti-cheat: reasonable name length
+import { getApiBaseUrl } from "../utils/env";
 
-  // Get global leaderboard (top 10 from last 5 minutes)
+class LeaderboardService {
+  private readonly baseUrl = getApiBaseUrl();
+  private readonly maxNameLength = 20; // Basic name validation
+
+  // Get global leaderboard (top 10 all-time)
   async getGlobalLeaderboard(): Promise<GlobalScore[]> {
     try {
-      console.log("Making API call to:", `${this.baseUrl}/leaderboard`);
       const response = await fetch(`${this.baseUrl}/leaderboard`);
-      console.log("API response status:", response.status);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data: LeaderboardResponse = await response.json();
-      console.log("API response data:", data);
-
-      // Filter scores from last 5 minutes
-      const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-      const recentScores = data.filter((score: GlobalScore) => {
-        // If no timestamp, assume it's recent (for backward compatibility)
-        return !score.timestamp || score.timestamp > fiveMinutesAgo;
-      });
-
-      // Sort by score (highest first) and return top 10
-      const sortedData = recentScores
-        .sort(
-          (a: GlobalScore, b: GlobalScore) =>
-            parseInt(b.highest_score) - parseInt(a.highest_score)
-        )
+      return data
+        .sort((a, b) => parseInt(b.highest_score) - parseInt(a.highest_score))
         .slice(0, 10);
-
-      console.log("Sorted and filtered data (last 5 min):", sortedData);
-      return sortedData;
     } catch (error) {
       console.error("Failed to fetch global leaderboard:", error);
       return [];
@@ -57,9 +53,7 @@ class LeaderboardService {
       const response = await fetch(
         `${this.baseUrl}/score?player_name=${encodeURIComponent(playerName)}`
       );
-      if (!response.ok) {
-        return null; // Player not found
-      }
+      if (!response.ok) return null;
       return await response.json();
     } catch (error) {
       console.error("Failed to fetch player score:", error);
@@ -67,66 +61,40 @@ class LeaderboardService {
     }
   }
 
-  // Submit new score with anti-cheat validation
-  async submitScore(playerName: string, score: number): Promise<boolean> {
-    // Anti-cheat validation
-    if (!this.validateScore(playerName, score)) {
-      console.warn("Score submission rejected due to validation failure");
-      return false;
-    }
-
+  // Submit full game state to /api/score; backend computes and stores score
+  async submitScoreFromState(gameState: GameStateData): Promise<boolean> {
+    if (!this.validateGameState(gameState)) return false;
     try {
       const response = await fetch(`${this.baseUrl}/score`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          player_name: playerName,
-          highest_score: score.toString(),
-          timestamp: Date.now(), // Add timestamp when submitting
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(gameState),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return true;
     } catch (error) {
-      console.error("Failed to submit score:", error);
+      console.error("Failed to submit score from state:", error);
       return false;
     }
   }
 
-  // Anti-cheat validation
-  private validateScore(playerName: string, score: number): boolean {
-    // Check score range
-    if (score < this.minScoreThreshold || score > this.maxScoreThreshold) {
-      console.warn(
-        `Score ${score} is outside valid range [${this.minScoreThreshold}, ${this.maxScoreThreshold}]`
-      );
-      return false;
-    }
-
-    // Check player name
+  // Basic validation for game state
+  private validateGameState(gameState: GameStateData): boolean {
     if (
-      !playerName ||
-      playerName.trim().length === 0 ||
-      playerName.length > this.maxNameLength
-    ) {
-      console.warn(`Invalid player name: "${playerName}"`);
+      !gameState.player_name ||
+      gameState.player_name.trim().length === 0 ||
+      gameState.player_name.length > this.maxNameLength
+    )
       return false;
-    }
-
-    // Check for suspicious patterns (very high scores)
-    if (score > 5000) {
-      // Additional validation for very high scores
-      // In a real implementation, you might check game duration, moves made, etc.
-      console.warn(`Very high score detected: ${score}`);
-      // For now, we'll allow it but log it
-    }
-
+    if (gameState.game_duration < 1000 || gameState.game_duration > 3600000)
+      return false;
+    if (gameState.final_block_count < 1 || gameState.final_block_count > 1000)
+      return false;
+    if (
+      !Array.isArray(gameState.game_events) ||
+      gameState.game_events.length === 0
+    )
+      return false;
     return true;
   }
 }
