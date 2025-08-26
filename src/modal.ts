@@ -13,6 +13,7 @@ export class ModalManager {
   private playerNameInput: HTMLInputElement;
   private playerDisplayName: HTMLElement;
   private finalScore: HTMLElement;
+  private personalBestBanner!: HTMLElement;
   private scoresList!: HTMLElement;
   private scoresListGameOver!: HTMLElement;
 
@@ -39,6 +40,18 @@ export class ModalManager {
       "player-display-name"
     ) as HTMLElement;
     this.finalScore = document.getElementById("final-score") as HTMLElement;
+    // Create PB banner (hidden by default)
+    this.personalBestBanner = document.createElement("div");
+    this.personalBestBanner.id = "personal-best-banner";
+    this.personalBestBanner.className = "personal-best-banner hidden";
+    this.personalBestBanner.textContent = "New Personal Best!";
+    const gameOverSection = document.getElementById("game-over-section");
+    if (gameOverSection) {
+      gameOverSection.insertBefore(
+        this.personalBestBanner,
+        gameOverSection.firstChild
+      );
+    }
     this.scoresList = document.getElementById("scores-list") as HTMLElement;
     this.scoresListGameOver = document.getElementById(
       "scores-list-game-over"
@@ -94,6 +107,10 @@ export class ModalManager {
 
     this.currentPlayerName = playerName;
     this.playerDisplayName.textContent = playerName;
+    // Persist for other components (e.g., leaderboard highlight)
+    try {
+      localStorage.setItem("towerBlocksPlayerName", playerName);
+    } catch {}
     this.showStartGame();
   }
 
@@ -149,6 +166,14 @@ export class ModalManager {
 
     // Save the score
     this.saveScore(finalScore);
+
+    // Show PB banner if this is the highest local score
+    const scores = this.getScores();
+    const maxLocal = scores.reduce((m, s) => Math.max(m, s.score), 0);
+    const isPB = finalScore >= maxLocal;
+    if (this.personalBestBanner) {
+      this.personalBestBanner.classList.toggle("hidden", !isPB);
+    }
 
     // Update both score lists to show the latest scores
     this.updateScoresList();

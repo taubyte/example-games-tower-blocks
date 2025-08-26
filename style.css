@@ -8,11 +8,33 @@ body {
   width: 100%;
   position: relative;
   font-family: "Comfortaa", cursive;
+  /* Animated gradient background */
+  background: linear-gradient(120deg, #f0f4ff, #e8f7ff, #fff3e0);
+  background-size: 200% 200%;
+  animation: bg-pan 12s ease infinite;
 }
 
 #container {
   width: 100%;
   height: 100%;
+  position: relative;
+}
+
+#container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 1;
+  /* Subtle vignette to add depth without changing solid bg */
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(0, 0, 0, 0) 60%,
+    rgba(0, 0, 0, 0.12) 100%
+  );
 }
 
 #score {
@@ -38,6 +60,18 @@ body {
   right: 0;
   bottom: 0;
   left: 0;
+}
+
+@keyframes bg-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Modal styles */
@@ -253,6 +287,40 @@ body {
 
 .leaderboard-item:hover {
   background-color: rgba(51, 51, 68, 0.05);
+}
+
+.leaderboard-item.me {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    rgba(76, 175, 80, 0.12),
+    rgba(76, 175, 80, 0.04)
+  );
+}
+
+.leaderboard-item.me .player-name::after {
+  content: "you";
+  margin-left: 8px;
+  font-size: 11px;
+  color: #4caf50;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.personal-best-banner {
+  background: linear-gradient(135deg, #ffd700, #ffb300);
+  color: #333344;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.personal-best-banner.hidden {
+  display: none;
 }
 
 .leaderboard-item.top-three {

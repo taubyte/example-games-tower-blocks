@@ -294,6 +294,12 @@ export class Game {
     if (result.state === "missed") {
       this.stage.remove(currentBlock.getMesh());
       audioManager.playSound("blockMiss");
+      // Haptics: heavy impact on miss
+      if ("vibrate" in navigator) {
+        try {
+          navigator.vibrate(200);
+        } catch {}
+      }
       this.endGame();
       return;
     }
@@ -306,6 +312,12 @@ export class Game {
       this.gameStats.perfectPlaces++;
       this.gameStats.consecutivePerfect++;
       audioManager.playSound("perfect");
+      // Haptics: light tap on perfect
+      if ("vibrate" in navigator) {
+        try {
+          navigator.vibrate(40);
+        } catch {}
+      }
 
       // Create sparkle effect for perfect placement
       particleSystem.createSparkle(currentBlock.position, currentBlock.color);
@@ -315,6 +327,12 @@ export class Game {
     } else {
       this.gameStats.consecutivePerfect = 0;
       audioManager.playSound("blockPlace");
+      // Haptics: medium tap on regular placement
+      if ("vibrate" in navigator) {
+        try {
+          navigator.vibrate(80);
+        } catch {}
+      }
 
       // Create explosion effect for regular placement
       particleSystem.createExplosion(
@@ -458,11 +476,11 @@ export class Game {
   }
 
   private getNextBlockColor(): number {
-    const { base, range, intesity } = config.block.colors;
+    const { base, range, intensity } = config.block.colors as any;
     const offset = this.blocks.length + this.colorOffset;
-    const r = base.r + range.r * Math.sin(intesity.r * offset);
-    const g = base.g + range.g * Math.sin(intesity.g * offset);
-    const b = base.b + range.b * Math.sin(intesity.b * offset);
+    const r = base.r + range.r * Math.sin((intensity?.r ?? 0.3) * offset);
+    const g = base.g + range.g * Math.sin((intensity?.g ?? 0.34) * offset);
+    const b = base.b + range.b * Math.sin((intensity?.b ?? 0.38) * offset);
     return (r << 16) + (g << 8) + b;
   }
 

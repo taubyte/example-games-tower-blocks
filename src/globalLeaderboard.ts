@@ -84,6 +84,12 @@ export class GlobalLeaderboard {
           (parseInt(a.highest_score as unknown as string, 10) || 0)
       );
 
+    const currentUsername = (
+      localStorage.getItem("towerBlocksPlayerName") ||
+      document.getElementById("player-display-name")?.textContent ||
+      ""
+    ).trim();
+
     this.container.innerHTML = `
       <div class="leaderboard-header">
         <h3>🌍 Global Leaderboard</h3>
@@ -98,7 +104,9 @@ export class GlobalLeaderboard {
             : scoresToShow
                 .map(
                   (score, index) => `
-              <div class="leaderboard-item ${index < 3 ? "top-three" : ""}">
+              <div class="leaderboard-item ${index < 3 ? "top-three" : ""} ${
+                    score.player_name === currentUsername ? "me" : ""
+                  }">
                 <div class="rank">${this.getRankIcon(index + 1)}</div>
                 <div class="player-name">${this.escapeHtml(
                   score.player_name
