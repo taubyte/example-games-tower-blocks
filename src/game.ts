@@ -1,45 +1,62 @@
-import { Easing, Tween, update as tweenjsUpdate } from '@tweenjs/tween.js';
-import Stats from 'three/examples/jsm/libs/stats.module';
-import { Vector3 } from 'three';
-import { Block } from './block';
-import { Stage } from './stage';
-import { Ticker } from './ticker';
-import { Env, getEnv } from './utils/env';
-import { getVersion } from './utils/version';
-import { Pool } from './utils/pool';
-import config from './config.json';
+import { Easing, Tween, update as tweenjsUpdate } from "@tweenjs/tween.js";
 
-type GameState = 'loading' | 'ready' | 'playing' | 'ended' | 'resetting';
+import { Vector3 } from "three";
+import { Block } from "./block";
+import { Stage } from "./stage";
+import { Ticker } from "./ticker";
+import { getVersion } from "./utils/version";
+import { Pool } from "./utils/pool";
+import config from "./config.json";
+import { audioManager } from "./audio";
+import { particleSystem } from "./particles";
+import { achievementSystem } from "./achievements";
+import { GameEvent, GameStateData } from "./services/leaderboard";
+
+type GameState = "loading" | "ready" | "playing" | "ended" | "resetting";
 
 export class Game {
-  private mainContainer: HTMLElement;
-  private scoreContainer: HTMLElement;
-  private versionContainer: HTMLElement;
-  private instructions: HTMLElement;
+  private mainContainer!: HTMLElement;
+  private scoreContainer!: HTMLElement;
+  private versionContainer!: HTMLElement;
+  private instructions!: HTMLElement;
 
-  private ticker: Ticker;
+  private ticker!: Ticker;
 
-  private state: GameState = 'loading';
-  private stage: Stage;
-  private blocks: Block[];
+  private state: GameState = "loading";
+  private stage!: Stage;
+  private blocks!: Block[];
 
-  private pool: Pool<Block>;
+  private pool!: Pool<Block>;
 
-  private stats: Stats;
+  private colorOffset!: number;
 
-  private colorOffset: number;
+  // Add callback for game over
+  private onGameOver:
+    | ((score: number, gameState?: GameStateData) => void)
+    | null = null;
+
+  // Game statistics for achievements
+  private gameStats = {
+    totalBlocks: 0,
+    perfectPlaces: 0,
+    consecutivePerfect: 0,
+    gameStartTime: 0,
+  };
+
+  // Game events for anti-cheat validation
+  private gameEvents: GameEvent[] = [];
 
   public prepare(
     width: number,
     height: number,
-    devicePixelRatio: number,
+    devicePixelRatio: number
   ): void {
-    this.mainContainer = document.getElementById('container');
-    this.scoreContainer = document.getElementById('score');
-    this.versionContainer = document.getElementById('version');
-    this.instructions = document.getElementById('instructions');
+    this.mainContainer = document.getElementById("container")!;
+    this.scoreContainer = document.getElementById("score")!;
+    this.versionContainer = document.getElementById("version")!;
+    this.instructions = document.getElementById("instructions")!;
 
-    this.scoreContainer.innerHTML = '0';
+    this.scoreContainer.innerHTML = "0";
     this.versionContainer.innerHTML = `v${getVersion()}`;
 
     this.stage = new Stage(devicePixelRatio);
@@ -50,25 +67,20 @@ export class Game {
 
     this.pool = new Pool(() => new Block());
 
-    if (getEnv() === Env.DEV) {
-      this.stats = Stats();
-      document.body.appendChild(this.stats.dom);
-    }
-
     this.ticker = new Ticker((currentTime: number, deltaTime: number) => {
       tweenjsUpdate(currentTime);
 
       this.update(deltaTime);
       this.render();
-
-      this.stats?.update();
     });
 
-    this.updateState('ready');
+    this.updateState("ready");
   }
 
   public start(): void {
     this.ticker.start();
+    // Start the game immediately when called from modal
+    this.startGame();
   }
 
   public pause(): void {
@@ -79,8 +91,26 @@ export class Game {
     this.stage.resize(width, height);
   }
 
+  // Add method to check if game is playing
+  public isPlaying(): boolean {
+    return this.state === "playing";
+  }
+
+  // Add method to restart the game
+  public restart(): void {
+    this.restartGame();
+  }
+
+  // Add method to set game over callback
+  public setGameOverCallback(callback: (score: number) => void): void {
+    this.onGameOver = callback;
+  }
+
   private update(deltaTime: number): void {
     this.moveCurrentBlock(deltaTime);
+
+    // Update particle system
+    particleSystem.update(deltaTime);
   }
 
   private render(): void {
@@ -95,28 +125,48 @@ export class Game {
 
   public action(): void {
     switch (this.state) {
-      case 'ready':
+      case "ready":
         this.startGame();
         break;
-      case 'playing':
+      case "playing":
         this.placeBlock();
         break;
-      case 'ended':
+      case "ended":
         this.restartGame();
         break;
     }
   }
 
   private startGame(): void {
-    if (this.state === 'playing') return;
+    if (this.state === "playing") return;
     this.colorOffset = Math.round(Math.random() * 100);
-    this.scoreContainer.innerHTML = '0';
-    this.updateState('playing');
+    this.scoreContainer.innerHTML = "0";
+    this.updateState("playing");
     this.addBlock(this.blocks[0]);
+
+    // Reset game stats and start tracking
+    this.gameStats = {
+      totalBlocks: 0,
+      perfectPlaces: 0,
+      consecutivePerfect: 0,
+      gameStartTime: Date.now(),
+    };
+
+    // Reset game events
+    this.gameEvents = [];
+
+    // Play game start sound
+    audioManager.playSound("gameStart");
+
+    // Start background music
+    audioManager.startBackgroundMusic();
+
+    // Update difficulty indicator
+    this.updateDifficultyIndicator();
   }
 
   private restartGame(): void {
-    this.updateState('resetting');
+    this.updateState("resetting");
 
     const length = this.blocks.length;
     const duration = 200;
@@ -158,7 +208,46 @@ export class Game {
   }
 
   private endGame(): void {
-    this.updateState('ended');
+    this.updateState("ended");
+
+    // Get the final score (number of blocks - 1 for the base block)
+    const finalScore = this.blocks.length - 1;
+
+    // Play game over sound
+    audioManager.playSound("gameOver");
+
+    // Stop background music
+    audioManager.stopBackgroundMusic();
+
+    // Update achievements
+    const gameTime = Date.now() - this.gameStats.gameStartTime;
+    achievementSystem.updateStats({
+      totalBlocks: this.gameStats.totalBlocks,
+      perfectPlaces: this.gameStats.perfectPlaces,
+      highestScore: Math.max(
+        finalScore,
+        achievementSystem.getAchievements().find((a) => a.id === "tower_10")
+          ?.unlocked
+          ? 0
+          : 0
+      ),
+      gamesPlayed: 1, // Increment games played
+      totalPlayTime: gameTime,
+      consecutivePerfect: this.gameStats.consecutivePerfect,
+    });
+
+    // Create game state data for anti-cheat validation
+    const gameState: GameStateData = {
+      player_name: "", // Will be set by the callback
+      game_events: this.gameEvents,
+      game_duration: Date.now() - this.gameStats.gameStartTime,
+      final_block_count: this.blocks.length,
+    };
+
+    // Call the game over callback if set
+    if (this.onGameOver) {
+      this.onGameOver(finalScore, gameState);
+    }
   }
 
   private placeBlock(): void {
@@ -168,18 +257,100 @@ export class Game {
 
     const result = currentBlock.cut(targetBlock, config.gameplay.accuracy);
 
-    if (result.state === 'missed') {
+    // Track game event
+    const eventTime = Date.now() - this.gameStats.gameStartTime;
+    const gameEvent: GameEvent = {
+      event_type:
+        result.state === "missed"
+          ? "missed"
+          : result.state === "perfect"
+          ? "perfect_placement"
+          : "block_chopped",
+      block_index: this.blocks.length - 1,
+      block_position: {
+        x: currentBlock.x,
+        y: currentBlock.y,
+        z: currentBlock.z,
+      },
+      block_scale: {
+        x: currentBlock.scale.x,
+        y: currentBlock.scale.y,
+        z: currentBlock.scale.z,
+      },
+      target_position: {
+        x: targetBlock.x,
+        y: targetBlock.y,
+        z: targetBlock.z,
+      },
+      target_scale: {
+        x: targetBlock.scale.x,
+        y: targetBlock.scale.y,
+        z: targetBlock.scale.z,
+      },
+      timestamp: eventTime,
+    };
+    this.gameEvents.push(gameEvent);
+
+    if (result.state === "missed") {
       this.stage.remove(currentBlock.getMesh());
+      audioManager.playSound("blockMiss");
+      // Haptics: heavy impact on miss
+      if ("vibrate" in navigator) {
+        try {
+          navigator.vibrate(200);
+        } catch {}
+      }
       this.endGame();
       return;
+    }
+
+    // Update game stats
+    this.gameStats.totalBlocks++;
+
+    // Handle perfect placement
+    if (result.state === "perfect") {
+      this.gameStats.perfectPlaces++;
+      this.gameStats.consecutivePerfect++;
+      audioManager.playSound("perfect");
+      // Haptics: light tap on perfect
+      if ("vibrate" in navigator) {
+        try {
+          navigator.vibrate(40);
+        } catch {}
+      }
+
+      // Create sparkle effect for perfect placement
+      particleSystem.createSparkle(currentBlock.position, currentBlock.color);
+
+      // Show perfect score popup
+      this.showScorePopup("Perfect!", "#FFD700");
+    } else {
+      this.gameStats.consecutivePerfect = 0;
+      audioManager.playSound("blockPlace");
+      // Haptics: medium tap on regular placement
+      if ("vibrate" in navigator) {
+        try {
+          navigator.vibrate(80);
+        } catch {}
+      }
+
+      // Create explosion effect for regular placement
+      particleSystem.createExplosion(
+        currentBlock.position,
+        currentBlock.color,
+        4
+      );
     }
 
     this.scoreContainer.innerHTML = String(length - 1);
     this.addBlock(currentBlock);
 
-    if (result.state === 'chopped') {
+    if (result.state === "chopped" && result.position && result.scale) {
       this.addChoppedBlock(result.position, result.scale, currentBlock);
     }
+
+    // Update difficulty indicator
+    this.updateDifficultyIndicator();
   }
 
   private addBaseBlock(): void {
@@ -197,12 +368,12 @@ export class Game {
     block.scale.set(
       targetBlock.scale.x,
       targetBlock.scale.y,
-      targetBlock.scale.z,
+      targetBlock.scale.z
     );
     block.position.set(
       targetBlock.x,
       targetBlock.y + targetBlock.height,
-      targetBlock.z,
+      targetBlock.z
     );
     block.direction.set(0, 0, 0);
     block.color = this.getNextBlockColor();
@@ -222,14 +393,14 @@ export class Game {
 
     this.scoreContainer.innerHTML = String(length - 1);
     if (length >= config.instructions.height) {
-      this.instructions.classList.add('hide');
+      this.instructions.classList.add("hide");
     }
   }
 
   private addChoppedBlock(
     position: Vector3,
     scale: Vector3,
-    sourceBlock: Block,
+    sourceBlock: Block
   ): void {
     const block = this.pool.get();
 
@@ -249,7 +420,7 @@ export class Game {
           y: block.y - 30,
           z: block.z + dirZ * 10,
         },
-        1000,
+        1000
       )
       .easing(Easing.Quadratic.In)
       .onComplete(() => {
@@ -265,7 +436,7 @@ export class Game {
   }
 
   private moveCurrentBlock(deltaTime: number): void {
-    if (this.state !== 'playing') return;
+    if (this.state !== "playing") return;
 
     const length = this.blocks.length;
     if (length < 2) return;
@@ -305,11 +476,47 @@ export class Game {
   }
 
   private getNextBlockColor(): number {
-    const { base, range, intesity } = config.block.colors;
+    const { base, range, intensity } = config.block.colors as any;
     const offset = this.blocks.length + this.colorOffset;
-    const r = base.r + range.r * Math.sin(intesity.r * offset);
-    const g = base.g + range.g * Math.sin(intesity.g * offset);
-    const b = base.b + range.b * Math.sin(intesity.b * offset);
+    const r = base.r + range.r * Math.sin((intensity?.r ?? 0.3) * offset);
+    const g = base.g + range.g * Math.sin((intensity?.g ?? 0.34) * offset);
+    const b = base.b + range.b * Math.sin((intensity?.b ?? 0.38) * offset);
     return (r << 16) + (g << 8) + b;
+  }
+
+  // Show score popup animation
+  private showScorePopup(text: string, color: string): void {
+    const popup = document.createElement("div");
+    popup.className = "score-multiplier";
+    popup.textContent = text;
+    popup.style.color = color;
+
+    document.body.appendChild(popup);
+
+    // Remove after animation
+    setTimeout(() => {
+      if (popup.parentNode) {
+        popup.parentNode.removeChild(popup);
+      }
+    }, 500);
+  }
+
+  // Update difficulty indicator based on current score
+  private updateDifficultyIndicator(): void {
+    const score = this.blocks.length - 1;
+    const indicator = document.getElementById("difficulty-indicator");
+
+    if (!indicator) return;
+
+    if (score < 10) {
+      indicator.textContent = "Easy";
+      indicator.className = "difficulty-indicator difficulty-easy";
+    } else if (score < 30) {
+      indicator.textContent = "Medium";
+      indicator.className = "difficulty-indicator difficulty-medium";
+    } else {
+      indicator.textContent = "Hard";
+      indicator.className = "difficulty-indicator difficulty-hard";
+    }
   }
 }

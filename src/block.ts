@@ -1,6 +1,6 @@
-import { BoxGeometry, Euler, Mesh, MeshToonMaterial, Vector3 } from 'three';
+import { BoxGeometry, Euler, Mesh, MeshToonMaterial, Vector3 } from "three";
 
-type CutState = 'missed' | 'perfect' | 'chopped';
+type CutState = "missed" | "perfect" | "chopped";
 
 export class Block {
   public direction: Vector3 = new Vector3(0, 0, 0);
@@ -8,7 +8,7 @@ export class Block {
   private mesh: Mesh;
   private material: MeshToonMaterial;
 
-  constructor(scale: Vector3 = undefined) {
+  constructor(scale?: Vector3) {
     this.material = new MeshToonMaterial();
     this.mesh = new Mesh(new BoxGeometry(1, 1, 1), this.material);
     if (scale !== undefined) {
@@ -57,11 +57,14 @@ export class Block {
     this.position.set(
       this.position.x + this.direction.x * scalar,
       this.position.y + this.direction.y * scalar,
-      this.position.z + this.direction.z * scalar,
+      this.position.z + this.direction.z * scalar
     );
   }
 
-  public cut(targetBlock: Block, accuracy: number): {
+  public cut(
+    targetBlock: Block,
+    accuracy: number
+  ): {
     state: CutState;
     position?: Vector3;
     scale?: Vector3;
@@ -71,11 +74,11 @@ export class Block {
 
     if (Math.abs(this.direction.x) > Number.EPSILON) {
       const overlap = targetBlock.width - Math.abs(this.x - targetBlock.x);
-      if (overlap < 0) return { state: 'missed' };
+      if (overlap < 0) return { state: "missed" };
 
       if (this.scale.x - overlap < accuracy) {
         this.x = targetBlock.x;
-        return { state: 'perfect' };
+        return { state: "perfect" };
       }
 
       this.scale.x = overlap;
@@ -87,11 +90,11 @@ export class Block {
         this.x + (scale.x + this.width) * (this.x < targetBlock.x ? -0.5 : 0.5);
     } else {
       const overlap = targetBlock.depth - Math.abs(this.z - targetBlock.z);
-      if (overlap < 0) return { state: 'missed' };
+      if (overlap < 0) return { state: "missed" };
 
       if (this.scale.z - overlap < accuracy) {
         this.z = targetBlock.z;
-        return { state: 'perfect' };
+        return { state: "perfect" };
       }
 
       this.scale.z = overlap;
@@ -103,6 +106,6 @@ export class Block {
         this.z + (scale.z + this.depth) * (this.z < targetBlock.z ? -0.5 : 0.5);
     }
 
-    return { state: 'chopped', position, scale };
+    return { state: "chopped", position, scale };
   }
 }

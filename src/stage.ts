@@ -1,4 +1,4 @@
-import { Easing, Tween } from '@tweenjs/tween.js';
+import { Easing, Tween } from "@tweenjs/tween.js";
 import {
   AmbientLight,
   DirectionalLight,
@@ -6,8 +6,8 @@ import {
   OrthographicCamera,
   Scene,
   WebGLRenderer,
-} from 'three';
-import config from './config.json';
+} from "three";
+import config from "./config.json";
 
 export class Stage {
   private container: HTMLElement;
@@ -16,7 +16,7 @@ export class Stage {
   private camera: OrthographicCamera;
 
   constructor(devicePixelRatio: number) {
-    this.container = document.getElementById('game');
+    this.container = document.getElementById("game");
     this.scene = new Scene();
 
     this.setupRenderer(devicePixelRatio);
@@ -72,7 +72,7 @@ export class Stage {
     const { color, intensity, position } = config.light.directional;
     const directionalLight = new DirectionalLight(
       parseInt(color, 16),
-      intensity,
+      intensity
     );
     directionalLight.position.set(position.x, position.y, position.z);
     this.add(directionalLight);

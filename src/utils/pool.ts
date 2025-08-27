@@ -11,7 +11,7 @@ export class Pool<T> {
     if (this.available.length === 0) {
       return this.func();
     }
-    return this.available.pop();
+    return this.available.pop() as T;
   }
 
   public release(item: T): void {
