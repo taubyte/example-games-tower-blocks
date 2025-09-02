@@ -14,6 +14,10 @@ A small browser game where you stack moving blocks as high as possible. This rep
 - **Sound toggle**
 - **Local and global leaderboard integration** (optional backend)
 
+## Backend Code
+
+https://github.com/taubyte/example-games-tower-blocks-backend
+
 ## Getting Started
 
 1. Install dependencies
