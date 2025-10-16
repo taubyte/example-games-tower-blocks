@@ -88,6 +88,9 @@ body {
   z-index: 1000;
   padding: 20px;
   box-sizing: border-box;
+  /* Prevent scrolling on mobile when modal is open */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-content {
@@ -387,6 +390,45 @@ body {
 
   .score {
     font-size: 13px;
+  }
+
+  /* Mobile modal fixes */
+  .modal-content {
+    padding: 20px;
+    margin: 10px;
+    max-width: calc(100vw - 20px);
+    width: calc(100vw - 20px);
+  }
+
+  .modal h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .modal input[type="text"] {
+    font-size: 16px !important; /* Prevent iOS zoom */
+    padding: 15px;
+    margin-bottom: 15px;
+    -webkit-appearance: none;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+  }
+
+  .modal button {
+    font-size: 16px;
+    padding: 15px 20px;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  #start-button {
+    font-size: 18px;
+    padding: 18px 20px;
+  }
+
+  #play-again-btn {
+    font-size: 16px;
+    padding: 15px 20px;
   }
 }
 

@@ -143,7 +143,14 @@ export class ModalManager {
     this.playerNameInput.autocomplete = "off";
     this.playerNameInput.spellcheck = false;
 
-    this.playerNameInput.focus();
+    // Use setTimeout to ensure focus works on mobile
+    setTimeout(() => {
+      this.playerNameInput.focus();
+      // On mobile, we need to ensure the virtual keyboard appears
+      if ("ontouchstart" in window) {
+        this.playerNameInput.click();
+      }
+    }, 100);
     // Hide global leaderboard when modal appears
     this.hideGlobalLeaderboard();
   }
